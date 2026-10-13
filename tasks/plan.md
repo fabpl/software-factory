@@ -51,7 +51,7 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 - [x] T6b Script `pnpm conventions:check <issue>` qui lit une issue réelle via `gh api` et affiche le contrat parsé
 
 ### Point de contrôle 1
-- [ ] CI verte ; A4 faite ; `conventions:check` relit l'issue manuscrite sans erreur ; couverture 100 % branches `parse*`/`serialize*`
+- [x] CI verte ; A4 faite (issue #1) ; `conventions:check` relit l'issue manuscrite sans erreur ; couverture 100 % branches `parse*`/`serialize*`
 
 ### Phase 2 — `skills` ∥ `agent-adapter`
 - [ ] T7 Chargeur de skills : front matter, changelog, attribution, `inject`

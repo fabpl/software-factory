@@ -47,7 +47,7 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Dépendances : T2–T5, A4. Taille : S. Fichiers : `scripts/check.ts`, `package.json`.
 
 ### Point de contrôle 1
-- [ ] CI verte, couverture atteinte, `conventions:check` relit l'issue manuscrite sans erreur. Revue humaine avant la phase 2.
+- [x] CI verte, couverture atteinte, `conventions:check` relit l'issue manuscrite (#1) sans erreur. Revue humaine : « phase 2 » le 13 octobre 2026.
 
 ## Phase 2 — `skills` ∥ `agent-adapter`
 
