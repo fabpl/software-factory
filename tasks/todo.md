@@ -133,7 +133,7 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Dépendances : T20. Taille : S. Fichiers : `src/cli.ts`.
 
 ### Point de contrôle 3 — la boucle tourne sans interface
-- [ ] Issue réelle de ce dépôt traversée via la CLI (`pnpm factory start-framing <issue>`, puis `answer`, `validate`, `start-implementation`, `evidence`). Revue humaine. À partir d'ici, les tâches suivantes peuvent devenir des issues dogfoodées.
+- [x] Issue réelle de ce dépôt traversée via la CLI : #2 « Compteur du README mis à jour automatiquement », 3 cartes de cadrage, 14 items validés, run d'implémentation de 71 tours (1,71 $), 1 décision gardée, 4 preuves `proven` par la CI, 1 preuve examinée, PR #3 fusionnée le 13 octobre 2026. Deux défauts corrigés en route (connecteurs MCP de l'utilisateur chargés à la reprise ; relance d'un cadrage inachevé). À partir d'ici, les tâches suivantes deviennent des issues dogfoodées.
 - [x] Redémarrage en plein run = une carte « Run interrompu » (scénario `test/scenario.test.ts`, 13 octobre 2026).
 - [x] Tick sans changement = zéro appel comptabilisé (`pnpm --filter @factory/orchestrator live`, 13 octobre 2026).
 

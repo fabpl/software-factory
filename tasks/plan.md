@@ -63,7 +63,7 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 - [x] T13 Test live : carte → `run.waiting` → reprise → `run.finished` ; fixtures `SDKMessage` enregistrées
 
 ### Point de contrôle 2
-- [ ] T13 passé une fois à la main avec la skill `framing` réelle sur une issue de ce dépôt (reste à faire : nécessite l'orchestrateur, phase 3) ; [x] test live minimal vert le 13 octobre 2026 ; [x] `grep claude-agent-sdk packages/*/src` ne sort que `src/claude/` ; CI verte à vérifier après push
+- [x] T13 passé avec la skill `framing` réelle sur l'issue #2 (13 octobre 2026, point de contrôle 3) ; [x] test live minimal vert le 13 octobre 2026 ; [x] `grep claude-agent-sdk packages/*/src` ne sort que `src/claude/` ; CI verte à vérifier après push
 
 ### Phase 3 — `orchestrator`
 - [x] T14 `auth.ts` (gh) et lecture GitHub avec ETag (msw)
@@ -76,7 +76,7 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 - [x] T20b Entrée CLI `pnpm factory tick|start-framing <issue>|answer <card> <choice>` pour piloter sans interface
 
 ### Point de contrôle 3 — « la boucle tourne sans interface »
-- [ ] Une issue réelle de ce dépôt passe `intent → framing → implementation → evidence → verdict` via la CLI (revue humaine, à faire) ; [x] redémarrage en plein run = une seule carte « Run interrompu » (scénario `full-loop`, deux redémarrages simulés) ; [x] tick sans changement = zéro appel comptabilisé (`pnpm --filter @factory/orchestrator live` le 13 octobre 2026 : seconde lecture 0 requête, 3 × 304)
+- [x] Une issue réelle de ce dépôt (#2, PR #3 fusionnée le 13 octobre 2026) passe `intent → framing → implementation → evidence → verdict` via la CLI, sans édition manuelle hors cartes ; [x] redémarrage en plein run = une seule carte « Run interrompu » (scénario `full-loop`, deux redémarrages simulés) ; [x] tick sans changement = zéro appel comptabilisé (`pnpm --filter @factory/orchestrator live` le 13 octobre 2026 : seconde lecture 0 requête, 3 × 304)
 
 ### Phase 4 — `inbox`
 - [ ] T21 Squelette Electron : main, preload, renderer, pont IPC, écran `blocked`
