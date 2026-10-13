@@ -45,8 +45,8 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 ### Phase 1 — `conventions`
 - [x] T2 Étiquettes et transitions de phase
 - [x] T3 Contrat : parse, serialize, aller-retour, tolérance, refus
-- [ ] T4 Cartes et réponses
-- [ ] T5 Preuves et bloc de run (autorité sur `proven`)
+- [x] T4 Cartes et réponses
+- [x] T5 Preuves et bloc de run (autorité sur `proven`)
 - [x] T6 ADR : gabarit et numérotation
 - [ ] T6b Script `pnpm conventions:check <issue>` qui lit une issue réelle via `gh api` et affiche le contrat parsé
 
