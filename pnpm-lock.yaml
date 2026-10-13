@@ -41,6 +41,12 @@ importers:
 
   packages/conventions: {}
 
+  packages/skills:
+    dependencies:
+      '@factory/conventions':
+        specifier: workspace:*
+        version: link:../conventions
+
 packages:
 
   '@babel/helper-string-parser@7.29.7':
