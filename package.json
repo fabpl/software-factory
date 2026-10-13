@@ -15,7 +15,8 @@
     "format:fix": "prettier --write .",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-    "check": "pnpm lint && pnpm format && pnpm typecheck && pnpm test"
+    "check": "pnpm lint && pnpm format && pnpm typecheck && pnpm test",
+    "conventions:check": "tsx packages/conventions/scripts/check.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -24,6 +25,7 @@
     "eslint": "10.12.0",
     "eslint-config-prettier": "10.1.8",
     "prettier": "3.9.10",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.2",
     "vitest": "5.0.4"

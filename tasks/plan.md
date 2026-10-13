@@ -48,7 +48,7 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 - [x] T4 Cartes et réponses
 - [x] T5 Preuves et bloc de run (autorité sur `proven`)
 - [x] T6 ADR : gabarit et numérotation
-- [ ] T6b Script `pnpm conventions:check <issue>` qui lit une issue réelle via `gh api` et affiche le contrat parsé
+- [x] T6b Script `pnpm conventions:check <issue>` qui lit une issue réelle via `gh api` et affiche le contrat parsé
 
 ### Point de contrôle 1
 - [ ] CI verte ; A4 faite ; `conventions:check` relit l'issue manuscrite sans erreur ; couverture 100 % branches `parse*`/`serialize*`
