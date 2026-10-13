@@ -35,7 +35,8 @@ describe('auth', () => {
     });
     const notAnError: Exec = () => Promise.reject(new Error('plain'));
     expect(await ghToken(notAnError)).toMatchObject({ ok: false, error: { detail: 'plain' } });
-    const thrownString: Exec = () => Promise.reject('texte brut' as never);
+    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- cas d'un rejet non-Error
+    const thrownString: Exec = () => Promise.reject('texte brut');
     expect(await ghToken(thrownString)).toMatchObject({
       ok: false,
       error: { detail: 'texte brut' },
