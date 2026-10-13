@@ -20,7 +20,9 @@ GitHub est la seule source de vérité. Le projet se construit avec lui-même d�
 Nombre de fois où il a fallu ouvrir le code pendant le dogfooding, et pourquoi (`pnpm factory counter add "raison"`, jamais à la main) :
 
 <!-- factory:counter -->
-**0**
+**1**
+
+1. Issue #2 : deux corrections de l'orchestrateur hors boucle (connecteurs MCP à la reprise, relance du cadrage)
 <!-- /factory:counter -->
 
 ## Développement
