@@ -5,7 +5,7 @@ import { ClaudeCodeAdapter } from '@factory/agent-adapter';
 import { ghReady, ghToken } from './auth.js';
 import type { RepoRef } from './github.js';
 import { createLog } from './log.js';
-import { createOctokitGitHub } from './octokit.js';
+import { createOctokitGitHub, type OctokitGitHub } from './octokit.js';
 import { Orchestrator, type OrchestratorOptions } from './orchestrator.js';
 import { createWorktrees } from './worktree.js';
 
@@ -48,6 +48,26 @@ export function parseRepo(slug: string): RepoRef | undefined {
   return m ? { owner: String(m[1]), repo: String(m[2]) } : undefined;
 }
 
+function githubFor(ref: RepoRef): OctokitGitHub {
+  return createOctokitGitHub({
+    ref,
+    token: async () => {
+      const token = await ghToken();
+      if (!token.ok) throw new Error(`${token.error.detail} (${token.error.command})`);
+      return token.value;
+    },
+  });
+}
+
+/** Client GitHub seul, pour les commandes qui n'ont pas besoin de l'orchestrateur (`counter`). */
+export async function connectGitHub(repo?: string): Promise<OctokitGitHub> {
+  const ready = await ghReady();
+  if (!ready.ok) throw new Error(`${ready.error.detail} (${ready.error.command})`);
+  const ref = repo !== undefined ? parseRepo(repo) : await detectRepo();
+  if (!ref) throw new Error('aucun dépôt GitHub détecté (pnpm factory --repo owner/repo …)');
+  return githubFor(ref);
+}
+
 export async function bootstrap(options: BootstrapOptions): Promise<Orchestrator> {
   const ready = await ghReady();
   const ref = (options.repo !== undefined ? parseRepo(options.repo) : await detectRepo()) ?? {
@@ -60,14 +80,7 @@ export async function bootstrap(options: BootstrapOptions): Promise<Orchestrator
   log.purge();
   sdkLog.purge();
 
-  const github = createOctokitGitHub({
-    ref,
-    token: async () => {
-      const token = await ghToken();
-      if (!token.ok) throw new Error(`${token.error.detail} (${token.error.command})`);
-      return token.value;
-    },
-  });
+  const github = githubFor(ref);
   const orchestratorOptions: OrchestratorOptions = {
     github,
     adapter: new ClaudeCodeAdapter({

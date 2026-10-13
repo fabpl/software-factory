@@ -17,7 +17,11 @@ GitHub est la seule source de vérité. Le projet se construit avec lui-même d�
 
 ## Compteur
 
-Nombre de fois où il a fallu ouvrir le code pendant le dogfooding, et pourquoi : **0** (pas encore commencé).
+Nombre de fois où il a fallu ouvrir le code pendant le dogfooding, et pourquoi (`pnpm factory counter add "raison"`, jamais à la main) :
+
+<!-- factory:counter -->
+**0**
+<!-- /factory:counter -->
 
 ## Développement
 

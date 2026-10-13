@@ -50,6 +50,14 @@ export type CiStatus =
   | { kind: 'green'; url: string }
   | { kind: 'red'; url: string };
 
+export interface FileData {
+  content: string;
+  /** Sha du blob : à renvoyer tel quel pour écrire par-dessus. */
+  sha: string;
+}
+
+export type FileCommit = { kind: 'committed'; sha: string } | { kind: 'stale' };
+
 export interface GitHubPort {
   readonly ref: RepoRef;
   /** Issues ouvertes portant une étiquette `phase:*` (les PR exclues). */
@@ -66,6 +74,8 @@ export interface GitHubPort {
   cloneUrl(): string;
   /** Compte qui exécute l'agent : porte l'assignation du verrou. */
   whoami(): Promise<string>;
+  /** Fichier sur une branche, relu sans cache ; absent = `undefined`. */
+  readFile(path: string, branch: string): Promise<FileData | undefined>;
 
   setLabels(number: number, labels: readonly string[]): Promise<void>;
   setAssignees(number: number, logins: readonly string[]): Promise<void>;
@@ -79,6 +89,17 @@ export interface GitHubPort {
     body: string;
   }): Promise<PullData>;
   markPullReady(number: number): Promise<void>;
+  /**
+   * Un commit qui remplace `path` sur `branch`, seulement si son sha vaut encore `sha` ;
+   * sinon `stale` et rien n'est écrit. Seul usage : le compteur du README (SPEC-orchestrator, Limites).
+   */
+  commitFile(input: {
+    path: string;
+    branch: string;
+    content: string;
+    sha: string;
+    message: string;
+  }): Promise<FileCommit>;
   ensureLabels(definitions: readonly LabelDefinition[]): Promise<void>;
 }
 

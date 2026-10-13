@@ -18,6 +18,7 @@ export default defineConfig({
         'src/worktree.ts',
         'src/github.ts',
         'src/octokit.ts',
+        'src/counter.ts',
       ],
       thresholds: { branches: 100, functions: 100, lines: 100, statements: 100 },
     },

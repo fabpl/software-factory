@@ -176,7 +176,7 @@ export function reconcile(state: TaskState, local: LocalRuns): Action[] {
 
 - **Toujours** : poser le verrou avant toute action ; relire GitHub avant d'écrire ; journaliser chaque action.
 - **Demander d'abord** : nouvelle ligne dans la table de réconciliation ; plus d'un run simultané ; webhooks ; GitHub App ; `--force`.
-- **Jamais** : stocker un jeton ; importer Electron ou l'interface ; détenir un état sans équivalent dans GitHub ; pousser sur la branche par défaut.
+- **Jamais** : stocker un jeton ; importer Electron ou l'interface ; détenir un état sans équivalent dans GitHub ; pousser sur la branche par défaut. **Exception unique** : `pnpm factory counter add "raison"` commite le bloc compteur de `README.md` directement sur la branche par défaut (API contents, sha attendu, aucune nouvelle tentative) ; aucun autre chemin de code n'écrit sur la branche par défaut.
 
 ## Critères de succès
 
@@ -200,6 +200,7 @@ export function reconcile(state: TaskState, local: LocalRuns): Action[] {
   - Lecture seule : `observe()` (CLI `state`) relit GitHub sans créer les étiquettes ni exécuter d'action.
   - **Journal de CI rouge** non récupéré au jalon 1 : la consigne de reprise demande à l'agent de reproduire l'échec localement ; l'URL du run reste pour l'humain.
   - **Verrou** posé pour tout lancement de run ; les écritures sans run (phase, `proven`, cartes de l'orchestrateur, `needs`, contrat normalisé) sont une seule écriture idempotente après relecture, sans verrou.
+- 2026-10-13 (issue #2, cartes #2 et #3, option A) : exception à « Jamais : pousser sur la branche par défaut » pour le seul commit du compteur de `README.md` par `pnpm factory counter add`, voir Limites.
 
 ## Questions tranchées à l'approbation
 

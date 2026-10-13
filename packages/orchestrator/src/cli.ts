@@ -9,13 +9,15 @@
  *   answer <card> <A|B|…|keep|reverse|done|other> [texte]
  *   validate <issue> <item> <validated|rejected|discussing|pending> [note]
  *   evidence <pr> <critère> <proven|blocked> [note]
+ *   counter add <raison>                    compteur du README, commit direct sur la branche par défaut
  *
  * Options : --repo owner/repo (sinon `gh repo view`), --home <dossier> (sinon $FACTORY_HOME ou ~/.software-factory).
  */
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { CardAnswer, ItemStatus } from '@factory/conventions';
-import { bootstrap } from './bootstrap.js';
+import { bootstrap, connectGitHub } from './bootstrap.js';
+import { counterCommand } from './counter.js';
 import type { Orchestrator } from './orchestrator.js';
 import type { CardView, InboxState } from './state.js';
 
@@ -110,6 +112,10 @@ function streamEvents(orchestrator: Orchestrator): () => void {
 
 async function main(): Promise<void> {
   const { command, args, home, repo } = parseArgs(process.argv.slice(2));
+  if (command === 'counter') {
+    process.exitCode = await counterCommand(await connectGitHub(repo), args, console);
+    return;
+  }
   const orchestrator = await bootstrap({ userData: home, ...(repo !== undefined ? { repo } : {}) });
   const need = (n: number, usage: string): void => {
     if (args.length < n) throw new Error(`usage : factory ${command} ${usage}`);

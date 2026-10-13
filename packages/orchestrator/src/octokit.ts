@@ -62,6 +62,13 @@ interface GhPull {
   html_url: string;
   node_id: string;
 }
+interface GhContent {
+  content: string;
+  sha: string;
+}
+interface GhContentWrite {
+  commit: { sha: string };
+}
 interface GhRun {
   html_url: string;
   status: string | null;
@@ -277,6 +284,24 @@ export function createOctokitGitHub(options: OctokitOptions): OctokitGitHub {
       return login;
     },
 
+    async readFile(path, branch) {
+      try {
+        // Pas de `get` : le sha doit être celui du moment, pas celui d'un ETag mis en cache.
+        const res = await request<GhContent>('GET /repos/{owner}/{repo}/contents/{path}', {
+          ...repo,
+          path,
+          ref: branch,
+        });
+        return {
+          content: Buffer.from(res.data.content, 'base64').toString('utf8'),
+          sha: res.data.sha,
+        };
+      } catch (error) {
+        if (error instanceof RequestError && error.status === 404) return undefined;
+        throw error;
+      }
+    },
+
     async setLabels(number, labels) {
       await request('PUT /repos/{owner}/{repo}/issues/{issue_number}/labels', {
         ...repo,
@@ -341,6 +366,24 @@ export function createOctokitGitHub(options: OctokitOptions): OctokitGitHub {
         'mutation($id: ID!) { markPullRequestReadyForReview(input: { pullRequestId: $id }) { pullRequest { isDraft } } }',
         { id: pull.node_id },
       );
+    },
+
+    async commitFile(input) {
+      try {
+        const res = await request<GhContentWrite>('PUT /repos/{owner}/{repo}/contents/{path}', {
+          ...repo,
+          path: input.path,
+          branch: input.branch,
+          sha: input.sha,
+          message: input.message,
+          content: Buffer.from(input.content, 'utf8').toString('base64'),
+        });
+        return { kind: 'committed', sha: res.data.commit.sha };
+      } catch (error) {
+        // 409 : le sha attendu n'est plus celui de la branche.
+        if (error instanceof RequestError && error.status === 409) return { kind: 'stale' };
+        throw error;
+      }
     },
 
     async ensureLabels(definitions) {
