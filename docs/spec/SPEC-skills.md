@@ -1,7 +1,7 @@
 # Spec : `skills`
 
 > Module 2 sur 5 du jalon 1. Dépend de [`conventions`](SPEC-conventions.md).
-> Statut : **à approuver**.
+> Statut : **approuvée** le 13 octobre 2026.
 
 ## Objectif
 
@@ -165,7 +165,7 @@ Les SKILL.md suivent la structure des skills d'origine : Overview, When to use, 
 4. Les tests statiques passent en CI.
 5. `NOTICE` et les blocs d'attribution sont présents.
 
-## Questions ouvertes
+## Questions tranchées à l'approbation
 
-1. Plafond de douze cartes en cadrage : trop, pas assez ? Recommandation : garder douze, mesurer sur les trois premières issues.
-2. Le prototype jetable de `framing` est-il poussé sur `framing/<issue>` (inspection possible) ou jamais poussé ? Recommandation : poussé, supprimé au passage en `implementation`.
+1. Plafond de douze cartes en cadrage, à mesurer sur les trois premières issues.
+2. Le prototype jetable de `framing` est poussé sur `framing/<issue>` et supprimé au passage en `implementation`.
