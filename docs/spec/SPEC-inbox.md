@@ -1,7 +1,7 @@
 # Spec : `inbox`
 
 > Module 5 sur 5 du jalon 1. Dépend de [`orchestrator`](SPEC-orchestrator.md). Dernier module de la carte des capacités.
-> Statut : **à approuver**.
+> Statut : **approuvée** le 13 octobre 2026.
 
 ## Objectif
 
@@ -159,7 +159,7 @@ export function Card({ card, onAnswer }: { card: CardView; onAnswer: (a: CardAns
 4. Aucun jeton machine anglais visible à l'écran (test sur les fixtures).
 5. `pnpm --filter desktop build` produit un `.dmg` qui démarre sur ta machine.
 
-## Questions ouvertes
+## Questions tranchées à l'approbation
 
-1. Nom de l'application (point ouvert 14 du cahier). Nécessaire pour `productName`, le dossier `userData` et le dépôt GitHub. Recommandation : en choisir un provisoire maintenant, renommable avant la première issue publique.
-2. Raccourci global pour ouvrir la fenêtre depuis n'importe où ? Recommandation : non au jalon 1, l'icône de barre de menus suffit.
+1. Nom provisoire : **Software Factory** (`productName: "Software Factory"`, identifiant `software-factory`). Renommable avant la première issue publique.
+2. Pas de raccourci global au jalon 1.

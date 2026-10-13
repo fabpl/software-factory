@@ -1,6 +1,6 @@
 # Carte des capacités — Jalon 1
 
-> Validée le 13 octobre 2026. Les identifiants de modules sont stables : ils nomment les specs (`docs/spec/SPEC-<module>.md`) et les tâches.
+> Validée le 13 octobre 2026. Les cinq specs sont approuvées (13 octobre 2026). Nom provisoire de l'app : Software Factory. Les identifiants de modules sont stables : ils nomment les specs (`docs/spec/SPEC-<module>.md`) et les tâches.
 
 | Module | Responsabilité | Dépend de |
 |---|---|---|
