@@ -55,6 +55,8 @@ test/fixtures/full-loop.json   scénario : 3 cartes de cadrage, décision + arbi
 8. **Phase `evidence` sans CI** : atteinte si toutes les preuves sont `to-review` et que le dépôt n'a aucun workflow. Avec des lignes `pending` sans workflow : carte « Aucune CI configurée », une seule fois.
 9. **Tâches fermées** : relues seulement si un worktree local existe (nettoyage), jamais affichées.
 10. **Pagination** : 100 issues ouvertes, 100 PR, 100 commentaires par conversation (jalon 1).
+11. **Journal de CI rouge** : non récupéré au jalon 1 (l'agent ne peut ouvrir ni l'URL ni `gh`). La consigne de reprise lui demande de reproduire l'échec localement avec les commandes du dépôt ; l'URL reste pour l'humain. Suite prévue : lire les jobs en échec via l'API Actions et les mettre dans le prompt.
+12. **Verrou** : `run:active` + assignation sont posés pour tout lancement de run. Les écritures sans run (changement de phase, `proven`, cartes de l'orchestrateur, étiquettes `needs`, contrat normalisé) sont faites sans verrou : une seule écriture idempotente chacune, après relecture de GitHub.
 
 ## Vérifications
 

@@ -198,6 +198,8 @@ export function reconcile(state: TaskState, local: LocalRuns): Action[] {
   - `update_evidence` ne rétrograde jamais une ligne `proven` existante ; `request_adr` commit **et** pousse.
   - `worktree remove --force` et `branch -D` ne touchent que le disque local ; aucun `push --force` nulle part.
   - Lecture seule : `observe()` (CLI `state`) relit GitHub sans créer les étiquettes ni exécuter d'action.
+  - **Journal de CI rouge** non récupéré au jalon 1 : la consigne de reprise demande à l'agent de reproduire l'échec localement ; l'URL du run reste pour l'humain.
+  - **Verrou** posé pour tout lancement de run ; les écritures sans run (phase, `proven`, cartes de l'orchestrateur, `needs`, contrat normalisé) sont une seule écriture idempotente après relecture, sans verrou.
 
 ## Questions tranchées à l'approbation
 

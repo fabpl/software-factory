@@ -100,7 +100,7 @@ export const PROMPTS = {
   actionDone: (cardId: string, text: string): string =>
     `L'humain a fait l'action demandée par la carte ${cardId}${text === '' ? '' : ` : ${text}`}. Continue.`,
   ciRed: (runUrl: string, attempt: number): string =>
-    `La CI est rouge sur le dernier push (tentative ${String(attempt)} sur ${String(MAX_CI_RETRIES)}) : ${runUrl}. Lis le journal de ce run, corrige la tranche concernée sans toucher au contrat, relance les tests, puis update_evidence.`,
+    `La CI est rouge sur le dernier push (tentative ${String(attempt)} sur ${String(MAX_CI_RETRIES)}). Tu ne peux pas ouvrir son journal (${runUrl}) : relance les commandes du dépôt dans le worktree (tests, lint, typecheck) pour reproduire l'échec, corrige la tranche concernée sans toucher au contrat, puis update_evidence.`,
 } as const;
 
 function hasCard(state: TaskState, title: string, status?: CardStatus): boolean {
