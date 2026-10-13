@@ -24,6 +24,10 @@ export function buildOptions(
     allowedTools: allowedTools(spec.policy),
     disallowedTools: disallowedTools(spec.policy),
     mcpServers: { factory: createFactoryServer(wrapHandlers(spec.tools, state)) },
+    // Seul le serveur `factory` : sans ce drapeau, les connecteurs claude.ai de l'utilisateur sont
+    // chargés à la reprise de session (cwd sous le dossier personnel) et leur capture de manifeste
+    // interrompt l'appel d'outil `factory` en cours (« tool call interrupted », observé le 13 octobre 2026).
+    strictMcpConfig: true,
     hooks: {
       PreToolUse: [
         { matcher: factoryToolId('emit_card'), hooks: [hook] },

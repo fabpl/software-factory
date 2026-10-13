@@ -194,6 +194,7 @@ export async function* start(spec: RunSpec): AsyncIterable<FactoryEvent> {
 
 - 2026-10-13 (T13, test live) : à la reprise d'un outil `factory` différé, le SDK émet `tool_deferred_unavailable` avant de connecter le serveur en process, puis poursuit la même session avec le prompt. L'adaptateur ne rejoue donc jamais l'outil : la réponse est toujours passée dans `prompt` (le hook reste armé si une version du SDK rejoue l'appel), ce premier `result` est ignoré, le second termine le run. `run.failed` (`execution`) seulement si le flux s'arrête sans second `result`. Voir `packages/agent-adapter/README.md`.
 - 2026-10-13 : `RunSpec.maxBudgetUsd` ajouté (question tranchée 1) ; `FactoryToolName`, `ContractInput`, `EvidenceInput`, `AdrRequest` vivent dans `conventions` (`src/tools.ts`), partagés avec `skills`.
+- 2026-10-13 (point de contrôle 3) : `strictMcpConfig: true` dans `buildOptions`. Sans ce drapeau, la reprise d'une session dont le `cwd` est sous le dossier personnel charge les connecteurs claude.ai de l'utilisateur (`pending` / `needs-auth`) et leur capture de manifeste interrompt le premier appel d'outil `factory` (« The tool call was interrupted before a result was received », reproduit 8 fois, jamais avec le drapeau). Cohérent avec « la configuration utilisateur n'est jamais lue ». Option `onStderr` ajoutée pour journaliser la sortie d'erreur du processus.
 
 ## Questions tranchées à l'approbation
 
