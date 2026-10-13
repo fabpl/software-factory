@@ -17,15 +17,28 @@
       "mcp__factory__request_adr",
       "mcp__factory__read_rules"
     ],
-    "mcp_servers": [{ "name": "factory", "status": "connected" }]
+    "mcp_servers": [
+      {
+        "name": "factory",
+        "status": "connected"
+      }
+    ]
   },
   {
     "type": "assistant",
     "session_id": "sess-1",
     "message": {
       "content": [
-        { "type": "text", "text": "Je lis les règles." },
-        { "type": "tool_use", "id": "toolu_1", "name": "mcp__factory__read_rules", "input": {} }
+        {
+          "type": "text",
+          "text": "Je lis les règles."
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_1",
+          "name": "mcp__factory__read_rules",
+          "input": {}
+        }
       ]
     }
   },
@@ -33,7 +46,13 @@
     "type": "user",
     "session_id": "sess-1",
     "message": {
-      "content": [{ "type": "tool_result", "tool_use_id": "toolu_1", "content": "Aucune règle." }]
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_1",
+          "content": "Aucune règle."
+        }
+      ]
     }
   },
   {
@@ -45,13 +64,17 @@
           "type": "tool_use",
           "id": "toolu_2",
           "name": "Read",
-          "input": { "file_path": "/wt/README.md" }
+          "input": {
+            "file_path": "/wt/README.md"
+          }
         },
         {
           "type": "tool_use",
           "id": "toolu_3",
           "name": "Bash",
-          "input": { "command": "git push origin main" }
+          "input": {
+            "command": "git push origin main"
+          }
         }
       ]
     }
@@ -61,21 +84,49 @@
     "session_id": "sess-1",
     "message": {
       "content": [
-        { "type": "tool_result", "tool_use_id": "toolu_2", "content": "# README" },
-        { "type": "tool_result", "tool_use_id": "toolu_3", "content": "refusé", "is_error": true },
-        { "type": "tool_result", "tool_use_id": "toolu_inconnu", "content": "?" },
-        { "type": "text", "text": "pas un résultat" }
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_2",
+          "content": "# README"
+        },
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_3",
+          "content": "refusé",
+          "is_error": true
+        },
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_inconnu",
+          "content": "?"
+        },
+        {
+          "type": "text",
+          "text": "pas un résultat"
+        }
       ]
     }
   },
-  { "type": "stream_event", "session_id": "sess-1", "event": {} },
-  { "type": "system", "subtype": "status", "session_id": "sess-1", "status": "compacting" },
+  {
+    "type": "stream_event",
+    "session_id": "sess-1",
+    "event": {}
+  },
+  {
+    "type": "system",
+    "subtype": "status",
+    "session_id": "sess-1",
+    "status": "compacting"
+  },
   {
     "type": "assistant",
     "session_id": "sess-1",
     "message": {
       "content": [
-        { "type": "text", "text": "   " },
+        {
+          "type": "text",
+          "text": "   "
+        },
         {
           "type": "tool_use",
           "id": "toolu_4",
@@ -85,12 +136,46 @@
             "title": "Où stocker ?",
             "context": "Confiance : 40 %.",
             "options": [
-              { "letter": "A", "text": "Fichier" },
-              { "letter": "B", "text": "Commentaire" }
+              {
+                "letter": "A",
+                "text": "Fichier"
+              },
+              {
+                "letter": "B",
+                "text": "Commentaire"
+              }
             ],
-            "recommendation": { "letter": "B", "text": "Durable." },
+            "recommendation": {
+              "letter": "B",
+              "text": "Durable."
+            },
             "reversibility": "reversible"
           }
+        }
+      ]
+    }
+  },
+  {
+    "type": "user",
+    "session_id": "sess-1",
+    "message": {
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_4",
+          "content": "Carte publiée, le run s'arrête. Ne fais aucun autre appel."
+        }
+      ]
+    }
+  },
+  {
+    "type": "assistant",
+    "session_id": "sess-1",
+    "message": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Carte publiée, j'attends la réponse."
         }
       ]
     }
@@ -102,23 +187,7 @@
     "is_error": false,
     "num_turns": 4,
     "total_cost_usd": 0.12,
-    "stop_reason": "tool_deferred",
-    "terminal_reason": "tool_deferred",
-    "result": "",
-    "deferred_tool_use": {
-      "id": "toolu_4",
-      "name": "mcp__factory__emit_card",
-      "input": {
-        "kind": "question",
-        "title": "Où stocker ?",
-        "context": "Confiance : 40 %.",
-        "options": [
-          { "letter": "A", "text": "Fichier" },
-          { "letter": "B", "text": "Commentaire" }
-        ],
-        "recommendation": { "letter": "B", "text": "Durable." },
-        "reversibility": "reversible"
-      }
-    }
+    "stop_reason": "end_turn",
+    "result": "Carte publiée, j'attends la réponse."
   }
 ]

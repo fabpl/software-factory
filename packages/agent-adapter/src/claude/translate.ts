@@ -1,4 +1,3 @@
-import { validateCardInput, type CardInput, type Result } from '@factory/conventions';
 import type { FactoryEvent, RunFailureReason } from '../events.js';
 import { factoryToolId, FACTORY_SERVER } from './policy.js';
 import type { RunState } from './state.js';
@@ -86,24 +85,6 @@ export function summarize(name: string, input: unknown): string {
   return truncate(text);
 }
 
-export const DEFERRED_UNAVAILABLE = 'tool_deferred_unavailable';
-
-export function isDeferredUnavailable(msg: SdkResultMessage): boolean {
-  return msg.terminal_reason === DEFERRED_UNAVAILABLE || msg.stop_reason === DEFERRED_UNAVAILABLE;
-}
-
-/** Carte différée par le hook `defer`, validée par `conventions`. */
-export function deferredCard(msg: SdkResultMessage): Result<CardInput, string> | undefined {
-  const deferred = msg.deferred_tool_use;
-  if (!deferred || isDeferredUnavailable(msg)) return undefined;
-  if (deferred.name !== factoryToolId('emit_card')) {
-    return { ok: false, error: `outil différé inattendu : ${deferred.name}` };
-  }
-  const card = deferred.input as unknown as CardInput;
-  const valid = validateCardInput(card);
-  return valid.ok ? { ok: true, value: card } : { ok: false, error: JSON.stringify(valid.error) };
-}
-
 export function missingTools(msg: SdkInitMessage, required: readonly string[]): string[] {
   const missing = required.map(factoryToolId).filter((id) => !msg.tools.includes(id));
   const server = msg.mcp_servers.find((s) => s.name === FACTORY_SERVER);
@@ -124,7 +105,7 @@ function failureReason(subtype: SdkResultMessage['subtype']): RunFailureReason {
 
 /**
  * `SDKMessage` → `FactoryEvent[]` (table de SPEC-agent-adapter). Zéro ou plusieurs événements par message.
- * Le cas « carte différée » n'est pas traité ici : il a un effet (publier la carte), voir `deferredCard`.
+ * L'arrêt sur carte bloquante n'est pas traité ici : l'adaptateur convertit `run.finished` en `run.waiting`.
  */
 export function translate(
   msg: SdkMessageLike,
@@ -200,13 +181,6 @@ export function translate(
             detail: (result.errors ?? []).join(' ; ') || result.subtype,
           },
         ];
-      }
-      if (isDeferredUnavailable(result)) {
-        // Reprise : le SDK vérifie l'outil différé avant de connecter le serveur `factory` (en process),
-        // le déclare indisponible, puis poursuit la session avec le prompt, qui porte la réponse.
-        // Observé en live le 13 octobre 2026 : un second `result` suit. Rien à émettre ici.
-        state.deferredUnavailable = true;
-        return [];
       }
       return [
         {

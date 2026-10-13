@@ -1,31 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { insideWorktree, preToolUse } from '../src/claude/hooks.js';
-import { RunState } from '../src/claude/state.js';
 import { DECISION, QUESTION } from './helpers.js';
 
 const CWD = '/tmp/wt';
-const call = (tool_name: string, tool_input: unknown, state = new RunState('run-1')) =>
-  preToolUse({ tool_name, tool_input, tool_use_id: 'toolu_1' }, state, CWD);
+const call = (tool_name: string, tool_input: unknown) =>
+  preToolUse({ tool_name, tool_input, tool_use_id: 'toolu_1' }, CWD);
 const decision = (out: ReturnType<typeof call>) => out.hookSpecificOutput?.permissionDecision;
 
 describe('hook PreToolUse — emit_card', () => {
-  it('diffère une carte bloquante sans réponse', () => {
-    const out = call('mcp__factory__emit_card', QUESTION);
-    expect(decision(out)).toBe('defer');
-    expect(out.hookSpecificOutput?.updatedInput).toBeUndefined();
-  });
-
-  it('laisse passer une carte bloquante avec la réponse armée, et la consomme', () => {
-    const state = new RunState('run-1');
-    const answer = { cardId: 'card-1', choice: { kind: 'option' as const, letter: 'B' }, text: '' };
-    state.pendingAnswer = answer;
-    const out = call('mcp__factory__emit_card', QUESTION, state);
-    expect(decision(out)).toBe('allow');
-    expect(out.hookSpecificOutput?.updatedInput).toEqual({ ...QUESTION, answer });
-    expect(decision(call('mcp__factory__emit_card', QUESTION, state))).toBe('defer');
-  });
-
-  it('ne touche pas une decision', () => {
+  it('ne touche à aucune carte : la publication et l’arrêt sont du ressort du handler', () => {
+    expect(call('mcp__factory__emit_card', QUESTION)).toEqual({});
     expect(call('mcp__factory__emit_card', DECISION)).toEqual({});
     expect(call('mcp__factory__emit_card', 'pas un objet')).toEqual({});
   });

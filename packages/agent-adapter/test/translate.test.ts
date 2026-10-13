@@ -2,7 +2,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { RunState } from '../src/claude/state.js';
 import {
-  deferredCard,
   missingTools,
   summarize,
   translate,
@@ -43,7 +42,7 @@ const result = (over: Partial<SdkResultMessage>): SdkResultMessage => ({
 });
 
 describe('translate — fixture synthétique de cadrage', () => {
-  it('produit la séquence attendue jusqu’à la carte différée', () => {
+  it('produit la séquence attendue jusqu’à la fin du tour qui publie la carte', () => {
     const { events, state } = run(load('synthetic-framing'));
     expect(events.map((e) => e.type)).toEqual([
       'run.started',
@@ -51,51 +50,21 @@ describe('translate — fixture synthétique de cadrage', () => {
       'agent.tool',
       'agent.tool',
       'agent.tool',
+      'agent.tool',
+      'agent.message',
       'run.finished',
     ]);
     expect(events[0]).toMatchObject({ sessionId: 'sess-1', model: 'claude-opus-5-5' });
     expect(events[2]).toMatchObject({ tool: 'mcp__factory__read_rules', summary: '', ok: true });
     expect(events[3]).toMatchObject({ tool: 'Read', summary: '/wt/README.md', ok: true });
     expect(events[4]).toMatchObject({ tool: 'Bash', summary: 'git push origin main', ok: false });
-    expect(state.toolUses.has('toolu_4')).toBe(true);
+    expect(events[5]).toMatchObject({
+      tool: 'mcp__factory__emit_card',
+      summary: 'Où stocker ?',
+      ok: true,
+    });
+    expect(state.toolUses.has('toolu_4')).toBe(false);
     expect(state.sessionId).toBe('sess-1');
-  });
-
-  it('la carte différée est extraite et validée à part', () => {
-    const last = load('synthetic-framing').at(-1) as SdkResultMessage;
-    const card = deferredCard(last);
-    expect(card?.ok).toBe(true);
-    if (card?.ok) expect(card.value.title).toBe('Où stocker ?');
-  });
-});
-
-describe('deferredCard', () => {
-  it('rien à différer', () => {
-    expect(deferredCard(result({}))).toBeUndefined();
-  });
-  it('outil différé inattendu', () => {
-    expect(
-      deferredCard(result({ deferred_tool_use: { id: 'x', name: 'Bash', input: {} } })),
-    ).toEqual({ ok: false, error: 'outil différé inattendu : Bash' });
-  });
-  it('carte invalide', () => {
-    const r = deferredCard(
-      result({
-        deferred_tool_use: {
-          id: 'x',
-          name: 'mcp__factory__emit_card',
-          input: {
-            kind: 'question',
-            title: 'T',
-            context: '',
-            options: [],
-            reversibility: 'reversible',
-          },
-        },
-      }),
-    );
-    expect(r?.ok).toBe(false);
-    if (r && !r.ok) expect(r.error).toMatch(/too-few-options/);
   });
 });
 
@@ -157,23 +126,6 @@ describe('translate — result', () => {
     const { events } = run([result({ subtype: 'error_during_execution', is_error: true })]);
     expect(events[0]).toMatchObject({ detail: 'error_during_execution' });
   });
-  it('outil différé indisponible à la reprise : rien émis, état marqué, pas de carte', () => {
-    const deferred = { id: 'x', name: 'mcp__factory__emit_card', input: {} };
-    const msg = result({
-      terminal_reason: 'tool_deferred_unavailable',
-      is_error: true,
-      deferred_tool_use: deferred,
-    });
-    const { events, state } = run([msg]);
-    expect(events).toEqual([]);
-    expect(state.deferredUnavailable).toBe(true);
-    expect(deferredCard(msg)).toBeUndefined();
-    expect(
-      deferredCard(
-        result({ stop_reason: 'tool_deferred_unavailable', deferred_tool_use: deferred }),
-      ),
-    ).toBeUndefined();
-  });
   it('succès → run.finished', () => {
     const { events } = run([result({ num_turns: 7, total_cost_usd: 0.42 })]);
     expect(events).toEqual([
@@ -217,8 +169,11 @@ describe('translate — fixture enregistrée en live (si présente)', () => {
     };
     const first = run(recorded.start, { requiredTools: ['emit_card', 'read_rules'] });
     expect(first.events[0]?.type).toBe('run.started');
+    // Le run s'arrête sur une fin de tour ordinaire après la carte ; l'adaptateur en fait un run.waiting.
     const lastStart = recorded.start.at(-1) as SdkResultMessage;
-    expect(deferredCard(lastStart)?.ok).toBe(true);
+    expect(lastStart.type).toBe('result');
+    expect(lastStart.subtype).toBe('success');
+    expect(first.events.at(-1)?.type).toBe('run.finished');
     const second = run(recorded.resume, { requiredTools: ['emit_card', 'read_rules'] });
     expect(second.events.at(-1)?.type).toBe('run.finished');
     expect(first.state.sessionId).toBe(second.state.sessionId);

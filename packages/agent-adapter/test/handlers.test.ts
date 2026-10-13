@@ -28,20 +28,6 @@ describe('handlers factory', () => {
     expect(state.drain()[0]).toMatchObject({ type: 'card.emitted', blocking: false });
   });
 
-  it('emit_card avec réponse (reprise) : ne republie pas, rend la réponse au modèle', async () => {
-    const { tools, state, handlers } = setup();
-    const answer = {
-      cardId: 'card-1',
-      choice: { kind: 'option' as const, letter: 'B' },
-      text: 'et note-le',
-    };
-    expect(await handlers.emit_card({ ...QUESTION, answer })).toBe(
-      "Réponse de l'humain à la carte card-1 : B. et note-le",
-    );
-    expect(tools.calls).toEqual([]);
-    expect(state.drain()).toEqual([]);
-  });
-
   it('emit_card invalide : refusée sans appel au handler', async () => {
     const { tools, handlers } = setup();
     const text = await handlers.emit_card({ ...QUESTION, options: [] });

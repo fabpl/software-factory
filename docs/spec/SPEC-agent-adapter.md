@@ -17,7 +17,7 @@ Vérifiés le 13 octobre 2026 sur `code.claude.com/docs/en/agent-sdk/typescript`
 |---|---|
 | `query({ prompt, options })` retourne un `AsyncGenerator<SDKMessage>` ; `options.cwd`, `options.resume`, `options.systemPrompt: { type: 'preset', preset: 'claude_code', append }`, `options.settingSources`, `options.permissionMode`, `options.allowedTools`, `options.disallowedTools`, `options.hooks`, `options.mcpServers`, `options.abortController`, `options.maxTurns` | Lancement et reprise |
 | `createSdkMcpServer({ name, tools })` + `tool(name, description, zodShape, handler)` : serveur MCP en process, outils nommés `mcp__<server>__<tool>` | Les cinq outils de `skills` |
-| Hook `PreToolUse` → `hookSpecificOutput.permissionDecision: "defer"` : le tour se termine, résultat `stop_reason: "tool_deferred"`, `deferred_tool_use: { id, name, input }`. À la reprise (`resume`), le même appel refait passer le hook, qui répond `allow` avec `updatedInput`. `defer` n'est honoré que si l'agent fait un seul appel d'outil dans le tour. | Carte bloquante et reprise avec la réponse |
+| Hook `PreToolUse` → `hookSpecificOutput.permissionDecision: "deny"` avec raison | Interdits (`git push`, `gh`, réseau, écriture hors worktree) |
 | `SDKResultMessage` : `session_id`, `subtype` (`success`, `error_max_turns`, `error_during_execution`, `error_max_budget_usd`…), `is_error`, `num_turns`, `total_cost_usd`, `stop_reason` | `run.finished` / `run.failed` |
 | `SDKSystemMessage` `init` : `session_id`, `tools`, `mcp_servers[].status`, `model` | `run.started`, vérification des outils requis |
 | `Query.close()` termine de force ; `interrupt()` n'existe qu'en mode flux d'entrée | Repli et annulation |
@@ -83,11 +83,11 @@ Règles :
 
 ### Carte bloquante
 
-1. Hook `PreToolUse` avec `matcher: 'mcp__factory__emit_card'`. Si `tool_input.kind` ∈ {`question`, `arbitration`, `action`} et qu'aucune réponse n'est en attente pour ce `tool_use_id` : répondre `permissionDecision: 'defer'`.
-2. Le résultat arrive avec `stop_reason: 'tool_deferred'`. L'adaptateur lit `deferred_tool_use.input`, le valide avec `conventions`, émet `card.emitted` (`blocking: true`) puis `run.waiting` avec `session_id`.
-3. **Repli** : si le résultat n'est pas `tool_deferred` alors que le handler `emit_card` a reçu une carte bloquante (l'agent a fait plusieurs appels dans le tour), le handler retourne au modèle « Carte publiée, le run s'arrête », l'adaptateur appelle `close()` et émet les mêmes événements. La reprise se fait alors sans rejouer l'outil : la réponse est donnée dans `prompt`.
-4. `resume(spec, answer)` : `options.resume = spec.sessionId`. Le hook voit repasser le même appel et répond `allow` avec `updatedInput = { ...input, answer }`. Le handler `emit_card` reçoit la carte avec sa réponse et retourne au modèle le texte de la réponse humaine.
-5. Si la reprise échoue (`tool_deferred_unavailable`, session absente) : `run.failed` avec `reason: 'execution'`. L'orchestrateur relance un run neuf.
+1. Le handler `emit_card` reçoit une carte de `kind` ∈ {`question`, `arbitration`, `action`} : il la valide avec `conventions`, la publie, pousse `card.emitted` (`blocking: true`), note la carte dans l'état du run et retourne au modèle « Carte publiée, le run s'arrête. Ne fais aucun autre appel. ».
+2. Le tour se termine normalement (`result` `success`). L'adaptateur, voyant une carte bloquante notée, émet `run.waiting` avec `session_id` à la place de `run.finished`.
+3. **Garde-fou** : si le modèle fait encore un appel d'outil après la carte (message `assistant` avec `tool_use`), l'adaptateur appelle `close()` et émet `run.waiting` tout de suite.
+4. `resume(spec, answer)` : `options.resume = spec.sessionId`, reprise ordinaire de la session ; la réponse humaine est donnée en tête de `prompt`. Aucun outil n'est rejoué, aucun hook n'intervient.
+5. Si la reprise échoue (session absente) : `run.failed` avec `reason: 'execution'`. L'orchestrateur relance un run neuf.
 
 ### Cartes non bloquantes et autres outils
 
@@ -108,7 +108,7 @@ Règles :
 | `system` / `init` | `run.started` |
 | `assistant` avec blocs texte | `agent.message` |
 | `assistant` avec `tool_use` + `user` `tool_result` correspondant | `agent.tool` (nom, résumé ≤ 120 caractères, `ok` = pas `is_error`) |
-| `result` `success`, `stop_reason: 'tool_deferred'` | `run.waiting` |
+| `result` `success` après une carte bloquante publiée dans le run | `run.waiting` (adaptateur) |
 | `result` `success` | `run.finished` |
 | `result` `error_max_turns` / `error_max_budget_usd` / `error_during_execution` | `run.failed` |
 | tout le reste (`stream_event`, hooks, tâches, rate limit…) | ignoré, journalisé en debug |
@@ -192,7 +192,8 @@ export async function* start(spec: RunSpec): AsyncIterable<FactoryEvent> {
 
 ## Amendements
 
-- 2026-10-13 (T13, test live) : à la reprise d'un outil `factory` différé, le SDK émet `tool_deferred_unavailable` avant de connecter le serveur en process, puis poursuit la même session avec le prompt. L'adaptateur ne rejoue donc jamais l'outil : la réponse est toujours passée dans `prompt` (le hook reste armé si une version du SDK rejoue l'appel), ce premier `result` est ignoré, le second termine le run. `run.failed` (`execution`) seulement si le flux s'arrête sans second `result`. Voir `packages/agent-adapter/README.md`.
+- 2026-10-13 (T13, test live) : à la reprise d'un outil `factory` différé, le SDK émet `tool_deferred_unavailable` avant de connecter le serveur en process, puis poursuit la même session avec le prompt. L'adaptateur ne rejoue donc jamais l'outil : la réponse est toujours passée dans `prompt`. **Remplacé le même jour** par l'amendement « issue #4 » ci-dessous.
+- 2026-10-13 (issue #4, carte 2, option A) : **plus de `defer`**. Le rejeu de l'outil différé à la reprise annulait la commande de reprise (`command_lifecycle cancelled`) et les appels `factory` des 45 premières secondes revenaient « interrupted », même avec `strictMcpConfig` (deux reprises sur trois échouées sur #2 et #4 ; reproduit par la sonde live quand son premier appel après reprise est un outil `factory`). Une carte bloquante est maintenant publiée par le handler, le tour se termine normalement et l'adaptateur convertit `run.finished` en `run.waiting` ; la reprise est une reprise ordinaire. `close()` ne sert plus que de garde-fou si le modèle rappelle un outil après la carte. Sonde live verte sur ce chemin.
 - 2026-10-13 : `RunSpec.maxBudgetUsd` ajouté (question tranchée 1) ; `FactoryToolName`, `ContractInput`, `EvidenceInput`, `AdrRequest` vivent dans `conventions` (`src/tools.ts`), partagés avec `skills`.
 - 2026-10-13 (point de contrôle 3) : `strictMcpConfig: true` dans `buildOptions`. Sans ce drapeau, la reprise d'une session dont le `cwd` est sous le dossier personnel charge les connecteurs claude.ai de l'utilisateur (`pending` / `needs-auth`) et leur capture de manifeste interrompt le premier appel d'outil `factory` (« The tool call was interrupted before a result was received », reproduit 8 fois, jamais avec le drapeau). Cohérent avec « la configuration utilisateur n'est jamais lue ». Option `onStderr` ajoutée pour journaliser la sortie d'erreur du processus.
 

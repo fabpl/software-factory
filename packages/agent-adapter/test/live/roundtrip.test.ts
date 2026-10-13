@@ -7,8 +7,8 @@
 import type { SDKMessage } from '@anthropic-ai/claude-agent-sdk';
 import type { CardInput, FactoryToolName } from '@factory/conventions';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -28,7 +28,8 @@ const INSTRUCTIONS = `Tu es un agent de test de la Software Factory. Suis exacte
 2. Émets UNE carte avec emit_card : kind "question", title "Couleur du test", context "Test live : choisis.",
    options A "Bleu" (consequence "froid") et B "Rouge" (consequence "chaud"), recommendation A "Bleu est le pari.",
    reversibility "reversible". Cet appel est le SEUL appel d'outil de ton tour. Le run s'arrête.
-3. À la reprise, quand tu as la réponse de l'humain, écris une phrase « Merci, réponse <lettre> reçue. »,
+3. À la reprise, quand tu as la réponse de l'humain, appelle D'ABORD l'outil read_rules (seul appel de ce tour),
+   puis écris une phrase « Merci, réponse <lettre> reçue. »,
    puis exécute avec Bash la commande \`git status\` (autorisée), puis avec Bash la commande
    \`git push origin main\` (elle sera refusée, c'est attendu), un appel Bash par tour,
    puis écris « Fin du test. » et termine sans autre appel.`;
@@ -49,7 +50,11 @@ function tools(): FactoryToolHandlers & { cards: CardInput[] } {
 }
 
 function worktree(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'factory-live-'));
+  // Sous le dossier personnel par défaut (comme les vrais worktrees) : les échecs à la reprise n'ont
+  // jamais été observés sous /tmp (README, point 4).
+  const base = process.env.FACTORY_LIVE_DIR ?? join(homedir(), '.software-factory', 'worktrees');
+  mkdirSync(base, { recursive: true });
+  const dir = mkdtempSync(join(base, 'live-'));
   execFileSync('git', ['init', '-q'], { cwd: dir });
   writeFileSync(join(dir, 'README.md'), '# Dépôt jetable du test live\n');
   return dir;
@@ -87,7 +92,8 @@ describe.skipIf(!live)('live — aller-retour carte / reprise', () => {
     expect(types[0]).toBe('run.started');
     expect(first.filter(isTerminal)).toHaveLength(1);
     expect(types.at(-1)).toBe('run.waiting');
-    expect(types.at(-2)).toBe('card.emitted');
+    // La carte est publiée par le handler, puis le tour se termine normalement (texte de clôture possible).
+    expect(types.indexOf('card.emitted')).toBeGreaterThan(0);
     expect(handlers.cards).toHaveLength(1);
     expect(handlers.cards[0]?.kind).toBe('question');
     const started = first[0];
@@ -113,6 +119,12 @@ describe.skipIf(!live)('live — aller-retour carte / reprise', () => {
     const finished = second.at(-1);
     if (finished?.type === 'run.finished') expect(finished.sessionId).toBe(sessionId);
     expect(handlers.cards).toHaveLength(1); // la carte répondue n'est pas republiée
+    // Le premier appel après reprise est un outil `factory` : c'est le chemin qui échouait en vrai.
+    const firstTool = second.find((e) => e.type === 'agent.tool');
+    expect(firstTool?.type === 'agent.tool' ? [firstTool.tool, firstTool.ok] : firstTool).toEqual([
+      'mcp__factory__read_rules',
+      true,
+    ]);
     const bash = second.filter((e) => e.type === 'agent.tool' && e.tool === 'Bash');
     expect(bash.map((e) => (e.type === 'agent.tool' ? [e.summary, e.ok] : []))).toEqual([
       ['git status', true],

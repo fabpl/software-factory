@@ -2,7 +2,7 @@ import type { HookCallback, Options, PreToolUseHookInput } from '@anthropic-ai/c
 import type { RunSpec } from '../events.js';
 import { wrapHandlers } from './handlers.js';
 import { preToolUse } from './hooks.js';
-import { allowedTools, disallowedTools, factoryToolId } from './policy.js';
+import { allowedTools, disallowedTools } from './policy.js';
 import { createFactoryServer } from './server.js';
 import type { RunState } from './state.js';
 
@@ -15,7 +15,7 @@ export function buildOptions(
   abortController: AbortController,
 ): Options {
   const hook: HookCallback = (input) =>
-    Promise.resolve(preToolUse(input as PreToolUseHookInput, state, spec.cwd));
+    Promise.resolve(preToolUse(input as PreToolUseHookInput, spec.cwd));
   return {
     systemPrompt: { type: 'preset', preset: 'claude_code', append: spec.instructions },
     cwd: spec.cwd,
@@ -29,10 +29,7 @@ export function buildOptions(
     // interrompt l'appel d'outil `factory` en cours (« tool call interrupted », observé le 13 octobre 2026).
     strictMcpConfig: true,
     hooks: {
-      PreToolUse: [
-        { matcher: factoryToolId('emit_card'), hooks: [hook] },
-        { matcher: 'Bash|Write|Edit|MultiEdit|NotebookEdit', hooks: [hook] },
-      ],
+      PreToolUse: [{ matcher: 'Bash|Write|Edit|MultiEdit|NotebookEdit', hooks: [hook] }],
     },
     abortController,
     maxTurns: spec.maxTurns ?? DEFAULT_MAX_TURNS,

@@ -4,7 +4,7 @@ import type { AgentAdapter, FactoryEvent, RunSpec } from '../events.js';
 import { answerText } from './handlers.js';
 import { buildOptions } from './options.js';
 import { RunState } from './state.js';
-import { deferredCard, translate } from './translate.js';
+import { translate, type SdkMessageLike } from './translate.js';
 
 export interface ClaudeCodeAdapterOptions {
   /** Flux `SDKMessage` brut, pour le journal JSONL de la salle des machines. */
@@ -26,14 +26,13 @@ export class ClaudeCodeAdapter implements AgentAdapter {
   constructor(private readonly options: ClaudeCodeAdapterOptions = {}) {}
 
   start(spec: RunSpec): AsyncIterable<FactoryEvent> {
-    return this.run(spec, spec.prompt, undefined);
+    return this.run(spec, spec.prompt);
   }
 
   resume(spec: RunSpec, answer: CardAnswer): AsyncIterable<FactoryEvent> {
-    // La réponse est à la fois armée dans le hook (rejeu de l'appel différé) et donnée dans le
-    // prompt (repli close(), ou run neuf) : le modèle la voit dans tous les cas.
+    // Reprise ordinaire de la session : la réponse voyage dans le prompt, aucun outil n'est rejoué.
     const prompt = `Réponse de l'humain à la carte ${answer.cardId} : ${answerText(answer)}\n\n${spec.prompt}`;
-    return this.run(spec, prompt, answer);
+    return this.run(spec, prompt);
   }
 
   async cancel(runId: string): Promise<void> {
@@ -44,13 +43,8 @@ export class ClaudeCodeAdapter implements AgentAdapter {
     await Promise.resolve();
   }
 
-  private async *run(
-    spec: RunSpec,
-    prompt: string,
-    answer: CardAnswer | undefined,
-  ): AsyncIterable<FactoryEvent> {
+  private async *run(spec: RunSpec, prompt: string): AsyncIterable<FactoryEvent> {
     const state = new RunState(spec.runId);
-    state.pendingAnswer = answer;
     if (spec.sessionId !== undefined) state.sessionId = spec.sessionId;
     const controller = new AbortController();
     const options = buildOptions(spec, state, controller);
@@ -73,41 +67,28 @@ export class ClaudeCodeAdapter implements AgentAdapter {
     try {
       for await (const msg of q) {
         this.options.onMessage?.(spec.runId, msg);
-        if (msg.type === 'result' && msg.subtype === 'success') {
-          const deferred = deferredCard(msg);
-          if (deferred) {
-            if (!deferred.ok) {
-              terminated = true;
-              yield {
-                type: 'run.failed',
-                runId: spec.runId,
-                sessionId: msg.session_id,
-                reason: 'execution',
-                detail: `carte différée invalide : ${deferred.error}`,
-              };
-              break;
-            }
-            const { cardId } = await spec.tools.emit_card(deferred.value);
-            state.sessionId = msg.session_id;
-            yield { type: 'card.emitted', runId: spec.runId, card: deferred.value, blocking: true };
-            yield waiting(cardId);
-            break;
-          }
-        }
-        const events = translate(msg, state, ctx);
-        for (const event of events) {
-          if (event.type === 'run.failed' || event.type === 'run.finished') terminated = true;
-          yield event;
-        }
-        yield* state.drain();
-        if (state.stopOnCard !== undefined) {
-          // Repli : le handler a publié la carte bloquante parce que l'agent a fait plusieurs appels.
+        if (state.stopOnCard !== undefined && callsTool(msg)) {
+          // L'agent a ignoré « Carte publiée, le run s'arrête » : on coupe avant l'appel.
           const cardId = state.stopOnCard;
           state.stopOnCard = undefined;
           q.close();
           yield waiting(cardId);
           break;
         }
+        const events = translate(msg, state, ctx);
+        for (const event of events) {
+          if (event.type === 'run.finished' && state.stopOnCard !== undefined) {
+            // Carte bloquante publiée pendant ce tour : la fin normale du tour vaut mise en attente.
+            const cardId = state.stopOnCard;
+            state.stopOnCard = undefined;
+            state.sessionId = event.sessionId;
+            yield waiting(cardId);
+            break;
+          }
+          if (event.type === 'run.failed' || event.type === 'run.finished') terminated = true;
+          yield event;
+        }
+        yield* state.drain();
         if (terminated) {
           if (events.some((e) => e.type === 'run.failed' && e.reason === 'tools_missing'))
             q.close();
@@ -136,12 +117,15 @@ export class ClaudeCodeAdapter implements AgentAdapter {
         runId: spec.runId,
         ...(state.sessionId !== undefined ? { sessionId: state.sessionId } : {}),
         reason: cancelled ? 'cancelled' : 'execution',
-        detail: cancelled
-          ? 'annulé'
-          : state.deferredUnavailable
-            ? 'reprise impossible : outil différé indisponible et flux terminé sans résultat'
-            : 'flux terminé sans résultat',
+        detail: cancelled ? 'annulé' : 'flux terminé sans résultat',
       };
     }
   }
+}
+
+/** Un message `assistant` qui contient au moins un `tool_use`. */
+function callsTool(msg: SdkMessageLike): boolean {
+  if (msg.type !== 'assistant') return false;
+  const content = (msg as { message?: { content?: unknown } }).message?.content;
+  return Array.isArray(content) && content.some((b: { type?: string }) => b.type === 'tool_use');
 }

@@ -16,7 +16,7 @@ import type { RunState } from './state.js';
 export type ToolText = Promise<string>;
 
 export interface WrappedHandlers {
-  emit_card(input: CardInput & { answer?: CardAnswer }): ToolText;
+  emit_card(input: CardInput): ToolText;
   update_contract(input: ContractInput): ToolText;
   update_evidence(input: EvidenceInput): ToolText;
   request_adr(input: AdrRequest): ToolText;
@@ -37,12 +37,7 @@ export function answerText(answer: CardAnswer): string {
 export function wrapHandlers(tools: FactoryToolHandlers, state: RunState): WrappedHandlers {
   const { runId } = state;
   return {
-    async emit_card(input) {
-      const { answer, ...card } = input;
-      if (answer !== undefined) {
-        // Reprise : la carte est déjà publiée, le hook a laissé passer l'appel avec la réponse.
-        return `Réponse de l'humain à la carte ${answer.cardId} : ${answerText(answer)}`;
-      }
+    async emit_card(card) {
       const valid = validateCardInput(card);
       if (!valid.ok) return `Carte refusée (${JSON.stringify(valid.error)}). Corrige et réémets.`;
       const { cardId } = await tools.emit_card(card);

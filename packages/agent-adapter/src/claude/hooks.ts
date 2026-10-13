@@ -1,7 +1,4 @@
-import { isBlocking, type CardKind } from '@factory/conventions';
 import { relative, resolve, sep } from 'node:path';
-import { factoryToolId } from './policy.js';
-import type { RunState } from './state.js';
 
 /** Sous-ensemble de `PreToolUseHookInput` que les hooks lisent ; plain object, testable sans SDK. */
 export interface PreToolUseInput {
@@ -10,18 +7,16 @@ export interface PreToolUseInput {
   tool_use_id: string;
 }
 
-export type Decision = 'allow' | 'deny' | 'defer';
+export type Decision = 'allow' | 'deny';
 
 export interface HookOutput {
   hookSpecificOutput?: {
     hookEventName: 'PreToolUse';
     permissionDecision: Decision;
     permissionDecisionReason: string;
-    updatedInput?: Record<string, unknown>;
   };
 }
 
-const EMIT_CARD = factoryToolId('emit_card');
 const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
 const FORBIDDEN_COMMANDS: readonly { re: RegExp; why: string }[] = [
   { re: /\bgit\s+push\b/, why: "git push est réservé à l'orchestrateur" },
@@ -32,17 +27,12 @@ const FORBIDDEN_COMMANDS: readonly { re: RegExp; why: string }[] = [
 const RM_RF =
   /\brm\s+(?:-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*|-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*)\s+(.*)$/m;
 
-function decide(
-  permissionDecision: Decision,
-  permissionDecisionReason: string,
-  updatedInput?: Record<string, unknown>,
-): HookOutput {
+function decide(permissionDecision: Decision, permissionDecisionReason: string): HookOutput {
   return {
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
       permissionDecision,
       permissionDecisionReason,
-      ...(updatedInput ? { updatedInput } : {}),
     },
   };
 }
@@ -60,16 +50,12 @@ function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
 }
 
-/** Hook `PreToolUse` : `defer` sur carte bloquante, `allow` + réponse à la reprise, `deny` sur l'interdit. */
-export function preToolUse(input: PreToolUseInput, state: RunState, cwd: string): HookOutput {
+/**
+ * Hook `PreToolUse` : `deny` sur l'interdit, rien d'autre. Les cartes bloquantes ne passent plus par
+ * `defer` : le handler `emit_card` publie la carte et le tour se termine (voir `adapter.ts`).
+ */
+export function preToolUse(input: PreToolUseInput, cwd: string): HookOutput {
   const args = asRecord(input.tool_input);
-
-  if (input.tool_name === EMIT_CARD) {
-    if (!isBlocking(args.kind as CardKind)) return {};
-    const answer = state.takeAnswer();
-    if (answer) return decide('allow', 'reprise avec la réponse humaine', { ...args, answer });
-    return decide('defer', "carte bloquante : le run s'arrête en attendant l'humain");
-  }
 
   if (input.tool_name === 'Bash') {
     const command = typeof args.command === 'string' ? args.command : '';
