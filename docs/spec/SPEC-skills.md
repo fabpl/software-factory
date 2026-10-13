@@ -56,7 +56,7 @@ Les skills ne touchent jamais GitHub, ne font jamais `git push`, n'ouvrent jamai
 |---|---|---|---|
 | `emit_card` | `kind`, `title`, `context`, `options[]` (lettre, texte, conséquence), `recommendation`, `change_cost`, `reversibility` | Publie une carte (`conventions` §4) | Oui si `kind` ∈ {`question`, `arbitration`, `action`}. Non si `decision`. |
 | `update_contract` | Liste complète d'items `H`/`D`/`C` avec statut et preuve prévue | Réécrit le bloc contrat (`conventions` §3) | Non |
-| `update_evidence` | Liste `critère → url, état` | Réécrit le commentaire preuves (`conventions` §5) | Non |
+| `update_evidence` | Liste `critère → référence, état` (états permis : `pending`, `to-review`, `blocked`) | Réécrit le commentaire preuves (`conventions` §5) ; déclenche commit + push | Non |
 | `request_adr` | `card_id`, `slug`, contenu | Crée `docs/adr/NNNN-slug.md` dans le worktree avec numéro réservé | Non |
 | `read_rules` | — | Retourne `.factory/rules.md` du dépôt cible, ou vide | Non |
 
@@ -83,15 +83,16 @@ Déroulé imposé :
 
 1. **Lire les règles** puis **le contrat**. Refuser de démarrer si le contrat a un item `pending` ou `discussing` (c'est à l'orchestrateur de ne pas lancer, la skill le vérifie quand même).
 2. **Découper** les critères en tranches fines, dans l'ordre des dépendances. Pas de carte pour ça : c'est du « comment ».
-3. **Par tranche** : test rouge, code, test vert, puis `update_evidence` pour le critère couvert, avec l'URL que l'orchestrateur fournit pour le dernier run CI, ou `to-review` avec le chemin du fichier commité.
+3. **Par tranche** : test rouge, code, test vert, puis `update_evidence` pour le critère couvert : `pending` avec l'identifiant du test (la CI prouvera), ou `to-review` avec le chemin du fichier commité. La skill n'écrit jamais `proven`.
 4. **Face à un choix hors contrat**, classer :
    - **Bloquant** (`arbitration`, `irreversible`) : schéma de base de données, API publique, nouvelle dépendance de production, sécurité ou authentification, suppression ou migration de données, tout point que `rules.md` marque « bloquant ». La skill émet la carte et le run s'arrête.
    - **Réversible** (`decision`) : tout le reste. La skill applique sa recommandation, émet la carte, continue.
    - **Hors du contrat de façon structurante** (un critère devient faux ou impossible) : carte `action` « Renvoyer en cadrage » avec explication. Le run s'arrête.
 5. **Ce qu'elle ne peut pas faire seule** (token, service externe, accès) : carte `action`, le run s'arrête.
-6. **Fin** : tous les critères `validated` ont une ligne de preuve `proven` ou `to-review`. Dernière action : `update_evidence` complet, puis le run se termine sans carte. L'orchestrateur passe la phase à `evidence`.
+6. **Fin** : tous les critères `validated` ont une ligne de preuve `pending`, `to-review` ou `proven` (CI déjà passée sur une tranche précédente). Dernière action : `update_evidence` complet, puis le run se termine sans carte. L'orchestrateur attend la CI puis passe la phase à `evidence`.
+7. **Reprise sur CI rouge** : l'orchestrateur relance la skill avec le journal d'échec. La skill corrige la tranche concernée sans toucher au contrat ; si la cause est hors de sa portée (environnement, secret), carte `action`.
 
-Interdits : modifier un critère du contrat, supprimer ou affaiblir un test existant sans carte, écrire `proven` sans URL hors agent, pousser quoi que ce soit (l'orchestrateur commit et pousse après chaque tranche).
+Interdits : modifier un critère du contrat, supprimer ou affaiblir un test existant sans carte, écrire `proven` (réservé à l'orchestrateur et à l'humain), pousser quoi que ce soit (l'orchestrateur commit et pousse après chaque tranche).
 
 ## Boucle d'apprentissage
 
@@ -160,10 +161,14 @@ Les SKILL.md suivent la structure des skills d'origine : Overview, When to use, 
 ## Critères de succès
 
 1. `framing` exécutée sur une issue de ce dépôt produit un contrat qui se parse avec `conventions`, où chaque critère a une preuve prévue, en douze cartes ou moins.
-2. `implementation` exécutée sur ce contrat termine avec zéro critère `missing` et aucune ligne `proven` sans URL.
+2. `implementation` exécutée sur ce contrat termine avec zéro critère `missing` et aucune ligne `proven` écrite par elle.
 3. Un choix volontairement absent du contrat (fixture) produit une `arbitration` si bloquant, une `decision` sinon, conformément à la liste.
 4. Les tests statiques passent en CI.
 5. `NOTICE` et les blocs d'attribution sont présents.
+
+## Amendements
+
+- 2026-10-13 : étape 3, 6, 7 et outil `update_evidence` : l'agent n'écrit jamais `proven` (carte « Qui a le droit d'écrire proven », option A).
 
 ## Questions tranchées à l'approbation
 

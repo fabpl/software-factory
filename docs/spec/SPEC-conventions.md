@@ -141,14 +141,16 @@ Un seul commentaire, réécrit par l'agent à chaque mise à jour, identifié pa
 | Critère | Preuve | État |
 |---|---|---|
 | C1 | [CI run 4412](https://github.com/…/actions/runs/4412) — `contract.roundtrip` | `proven` |
+| C2 | `labels.unknown` (CI) | `pending` |
 | C3 | [capture `docs/evidence/42-inbox.png`](…) | `to-review` |
 | C4 | — | `blocked` : nécessite un token (carte #9) |
 ```
 
-- États : `proven` (preuve produite hors agent, verte), `to-review` (preuve présente, l'humain doit regarder), `blocked`, `missing`.
+- États : `pending` (preuve annoncée, artefact pas encore produit : identifiant du test ou du fichier attendu), `proven` (preuve produite hors agent, verte), `to-review` (preuve présente, l'humain doit regarder), `blocked`, `missing`.
+- **Autorité** : l'agent n'écrit que `pending`, `to-review`, `blocked`. **Seul l'orchestrateur écrit `proven`** pour une preuve CI, quand le run Actions sur le SHA poussé est vert, en y mettant l'URL du run. L'humain écrit `proven` pour une preuve `to-review` qu'il a examinée. Une ligne `proven` écrite par l'agent est rejetée par le parseur.
 - Une ligne par critère `validated` du contrat, à la version `contract` indiquée. Un critère sans ligne est `missing`.
 - Une preuve `proven` pointe obligatoirement vers une URL hors du commentaire (run CI, fichier commité, artefact de PR). Une phrase de l'agent n'est pas une preuve.
-- Passage en `verdict` : zéro `missing`, zéro `blocked`, tout `to-review` a été marqué examiné par l'humain (l'app édite l'état en `proven` ou renvoie en cadrage).
+- Passage en `verdict` : zéro `missing`, zéro `pending`, zéro `blocked`, tout `to-review` a été marqué examiné par l'humain (l'app édite l'état en `proven` ou renvoie en cadrage).
 
 ## 6. ADR
 
@@ -236,6 +238,7 @@ export function parseContract(body: string): Result<Contract, ContractError> {
 ## Amendements
 
 - 2026-10-13 : §7 bloc de run ajouté (spec `agent-adapter`, hypothèse 5).
+- 2026-10-13 : §5 état `pending` et autorité sur `proven` (carte « Qui a le droit d'écrire proven », option A).
 
 ## Critères de succès
 

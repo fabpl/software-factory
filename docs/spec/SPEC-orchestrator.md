@@ -52,7 +52,10 @@ interface TaskState {
 | Item de contrat coché à la main | Statut `validated`, contrat réécrit |
 | `phase:implementation`, contrat complet, pas de run, pas de PR | Créer worktree + branche, démarrer run `implementation` |
 | `evidence.updated` reçu | Commit + push, réécrire le commentaire preuves, créer la PR brouillon si absente |
-| Run `implementation` terminé sans carte, zéro critère `missing` | `phase:evidence`, PR marquée prête pour relecture |
+| Run Actions sur `pr.headSha` terminé **vert**, lignes `pending` présentes | Passer ces lignes à `proven` avec l'URL du run (seul endroit qui écrit `proven` pour une preuve CI) |
+| Run Actions sur `pr.headSha` terminé **rouge**, run `implementation` terminé | Reprendre le run avec le journal d'échec en consigne ; au-delà de deux reprises pour le même critère, carte `action` « CI rouge, intervention nécessaire » |
+| Pas de workflow Actions sur le dépôt alors que des lignes sont `pending` | Carte `action` « Aucune CI configurée » (une seule fois) |
+| Run `implementation` terminé sans carte, zéro `missing`, zéro `pending`, CI verte sur `headSha` | `phase:evidence`, PR marquée prête pour relecture |
 | `phase:evidence`, toutes lignes `proven` | `phase:verdict`, carte `action` « Fusionner la PR » |
 | PR fusionnée ou issue fermée | Supprimer worktree et branche locale, retirer `run:*` |
 | `phase:framing` posée à la main sur une tâche en implémentation | Carte `action` « Retour en cadrage : supprimer le worktree ? » (le worktree est gardé jusqu'à `done`) |
@@ -68,7 +71,7 @@ L'orchestrateur fournit à l'adaptateur les cinq handlers de `skills` :
 |---|---|
 | `emit_card` | Valide via `conventions`, publie le commentaire dans l'issue (framing) ou la PR (implementation), pose `needs:*`. Si bloquante : enregistre l'attente, le run s'arrête (adaptateur). |
 | `update_contract` | Réécrit le bloc contrat, `version + 1`, items inconnus refusés, identifiants jamais réutilisés |
-| `update_evidence` | Résout `ci:latest` en URL du dernier run Actions sur `headSha` (ou `missing` si aucun), réécrit le commentaire, déclenche commit + push |
+| `update_evidence` | Refuse toute ligne `proven` venant de l'agent, réécrit le commentaire avec les lignes `pending` / `to-review` / `blocked`, déclenche commit + push. Le passage à `proven` est fait par la réconciliation quand la CI est verte |
 | `request_adr` | Réserve `NNNN` (max existant + 1 dans `docs/adr/` du worktree), écrit le fichier, ajoute une ligne Tranché à `.factory/rules.md`, commit |
 | `read_rules` | Lit `.factory/rules.md` du worktree, vide si absent |
 
@@ -181,7 +184,12 @@ export function reconcile(state: TaskState, local: LocalRuns): Action[] {
 2. Sur ce dépôt, une issue réelle passe `intent → framing → implementation → evidence → verdict` via les commandes de l'API, sans édition manuelle hors cartes.
 3. L'app tuée en plein run et relancée produit exactement une carte « Run interrompu » et aucune action en double.
 4. Quota GitHub : un tick sans changement consomme zéro appel comptabilisé (tout en 304).
+6. Une ligne `pending` passe à `proven` sans intervention humaine ni agent, dans le tick qui suit une CI verte, avec l'URL du run.
 5. `grep -r "electron" packages/orchestrator/src` ne trouve rien.
+
+## Amendements
+
+- 2026-10-13 : quatre lignes de réconciliation CI et handler `update_evidence` (carte « Qui a le droit d'écrire proven », option A).
 
 ## Questions tranchées à l'approbation
 
