@@ -29,7 +29,8 @@ const INSTRUCTIONS = `Tu es un agent de test de la Software Factory. Suis exacte
    options A "Bleu" (consequence "froid") et B "Rouge" (consequence "chaud"), recommendation A "Bleu est le pari.",
    reversibility "reversible". Cet appel est le SEUL appel d'outil de ton tour. Le run s'arrête.
 3. À la reprise, quand tu as la réponse de l'humain, écris une phrase « Merci, réponse <lettre> reçue. »,
-   puis exécute avec Bash la commande \`git push origin main\` (elle sera refusée, c'est attendu),
+   puis exécute avec Bash la commande \`git status\` (autorisée), puis avec Bash la commande
+   \`git push origin main\` (elle sera refusée, c'est attendu), un appel Bash par tour,
    puis écris « Fin du test. » et termine sans autre appel.`;
 
 function tools(): FactoryToolHandlers & { cards: CardInput[] } {
@@ -112,8 +113,11 @@ describe.skipIf(!live)('live — aller-retour carte / reprise', () => {
     const finished = second.at(-1);
     if (finished?.type === 'run.finished') expect(finished.sessionId).toBe(sessionId);
     expect(handlers.cards).toHaveLength(1); // la carte répondue n'est pas republiée
-    const push = second.find((e) => e.type === 'agent.tool' && e.tool === 'Bash');
-    expect(push).toMatchObject({ ok: false });
+    const bash = second.filter((e) => e.type === 'agent.tool' && e.tool === 'Bash');
+    expect(bash.map((e) => (e.type === 'agent.tool' ? [e.summary, e.ok] : []))).toEqual([
+      ['git status', true],
+      ['git push origin main', false],
+    ]);
     expect(second.some((e) => e.type === 'agent.message' && e.text.includes('reçue'))).toBe(true);
 
     const home = process.env.HOME ?? '';
