@@ -133,7 +133,9 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Dépendances : T20. Taille : S. Fichiers : `src/cli.ts`.
 
 ### Point de contrôle 3 — la boucle tourne sans interface
-- [ ] Issue réelle de ce dépôt traversée via la CLI ; redémarrage en plein run = une carte « Run interrompu » ; tick sans changement = zéro appel comptabilisé. Revue humaine. À partir d'ici, les tâches suivantes peuvent devenir des issues dogfoodées.
+- [ ] Issue réelle de ce dépôt traversée via la CLI (`pnpm factory start-framing <issue>`, puis `answer`, `validate`, `start-implementation`, `evidence`). Revue humaine. À partir d'ici, les tâches suivantes peuvent devenir des issues dogfoodées.
+- [x] Redémarrage en plein run = une carte « Run interrompu » (scénario `test/scenario.test.ts`, 13 octobre 2026).
+- [x] Tick sans changement = zéro appel comptabilisé (`pnpm --filter @factory/orchestrator live`, 13 octobre 2026).
 
 ## Phase 4 — `inbox` (`apps/desktop`)
 

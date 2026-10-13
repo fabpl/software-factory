@@ -66,17 +66,17 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 - [ ] T13 passé une fois à la main avec la skill `framing` réelle sur une issue de ce dépôt (reste à faire : nécessite l'orchestrateur, phase 3) ; [x] test live minimal vert le 13 octobre 2026 ; [x] `grep claude-agent-sdk packages/*/src` ne sort que `src/claude/` ; CI verte à vérifier après push
 
 ### Phase 3 — `orchestrator`
-- [ ] T14 `auth.ts` (gh) et lecture GitHub avec ETag (msw)
-- [ ] T15 Écritures GitHub idempotentes : étiquettes, commentaires, contrat, preuves, bloc de run
-- [ ] T16 `state.ts` + `reconcile.ts` lignes cadrage et verrou
-- [ ] T17 `reconcile.ts` lignes implémentation, CI, verdict
-- [ ] T18 `worktree.ts` (simple-git)
-- [ ] T19 Les cinq handlers
-- [ ] T20 Boucle de tick, API `Orchestrator`, journal JSONL, scénario complet avec redémarrage simulé
-- [ ] T20b Entrée CLI `pnpm factory tick|start-framing <issue>|answer <card> <choice>` pour piloter sans interface
+- [x] T14 `auth.ts` (gh) et lecture GitHub avec ETag (msw)
+- [x] T15 Écritures GitHub idempotentes : étiquettes, commentaires, contrat, preuves, bloc de run
+- [x] T16 `state.ts` + `reconcile.ts` lignes cadrage et verrou
+- [x] T17 `reconcile.ts` lignes implémentation, CI, verdict
+- [x] T18 `worktree.ts` (simple-git)
+- [x] T19 Les cinq handlers
+- [x] T20 Boucle de tick, API `Orchestrator`, journal JSONL, scénario complet avec redémarrage simulé
+- [x] T20b Entrée CLI `pnpm factory tick|start-framing <issue>|answer <card> <choice>` pour piloter sans interface
 
 ### Point de contrôle 3 — « la boucle tourne sans interface »
-- [ ] Une issue réelle de ce dépôt passe `intent → framing → implementation → evidence → verdict` via la CLI ; redémarrage en plein run = une seule carte « Run interrompu » ; tick sans changement = zéro appel comptabilisé
+- [ ] Une issue réelle de ce dépôt passe `intent → framing → implementation → evidence → verdict` via la CLI (revue humaine, à faire) ; [x] redémarrage en plein run = une seule carte « Run interrompu » (scénario `full-loop`, deux redémarrages simulés) ; [x] tick sans changement = zéro appel comptabilisé (`pnpm --filter @factory/orchestrator live` le 13 octobre 2026 : seconde lecture 0 requête, 3 × 304)
 
 ### Phase 4 — `inbox`
 - [ ] T21 Squelette Electron : main, preload, renderer, pont IPC, écran `blocked`

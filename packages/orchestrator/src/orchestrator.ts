@@ -293,7 +293,7 @@ export class Orchestrator {
     if (this.ticking) await this.ticking;
     const errors: string[] = [];
     try {
-      await this.read(errors);
+      await this.read(errors, { ensureLabels: false });
     } catch (error) {
       errors.push(error instanceof Error ? error.message : String(error));
     }
@@ -346,9 +346,10 @@ export class Orchestrator {
   /** Moitié lecture du tick : étiquettes, identité, issues, PR, CI → `this.tasks`. */
   private async read(
     errors: string[],
+    options: { ensureLabels: boolean } = { ensureLabels: true },
   ): Promise<{ pulls: PullData[]; repo: { hasWorkflows: boolean } }> {
     const { github, worktrees } = this.options;
-    if (!this.labelsEnsured) {
+    if (options.ensureLabels && !this.labelsEnsured) {
       await github.ensureLabels(LABEL_DEFINITIONS);
       this.labelsEnsured = true;
     }

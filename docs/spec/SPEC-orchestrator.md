@@ -190,6 +190,14 @@ export function reconcile(state: TaskState, local: LocalRuns): Action[] {
 ## Amendements
 
 - 2026-10-13 : quatre lignes de réconciliation CI et handler `update_evidence` (carte « Qui a le droit d'écrire proven », option A).
+- 2026-10-13 (phase 3, interprétations consignées dans `packages/orchestrator/README.md`) :
+  - **Run échoué** (`run.failed`, flux sans événement terminal, annulation) : `run:failed` posé et carte `action` « Run interrompu, relancer ? » publiée, comme pour le verrou orphelin. « fait » reprend la session du bloc de run si elle existe, sinon run neuf ; si le bloc attend une carte encore ouverte, c'est la réponse à cette carte qui relance. Un run qui (re)démarre passe toute carte « Run interrompu » encore ouverte à `cancelled`.
+  - **Cartes de l'orchestrateur** (« Run interrompu », « Aucune CI configurée », « CI rouge sur <sha> », « Fusionner la PR », « Retour en cadrage ») portent `skill=orchestrator@0.1.0` et sont idempotentes par titre.
+  - **PR brouillon** ouverte dès qu'un handler d'implémentation en a besoin (`emit_card` dans la PR, `update_evidence`), par un commit vide si rien n'est à committer.
+  - **Reprises CI rouge** comptées en mémoire (deux au plus par issue, remises à zéro à `proven` ou au changement de phase) : un redémarrage de l'app peut en accorder deux de plus, jamais moins.
+  - `update_evidence` ne rétrograde jamais une ligne `proven` existante ; `request_adr` commit **et** pousse.
+  - `worktree remove --force` et `branch -D` ne touchent que le disque local ; aucun `push --force` nulle part.
+  - Lecture seule : `observe()` (CLI `state`) relit GitHub sans créer les étiquettes ni exécuter d'action.
 
 ## Questions tranchées à l'approbation
 

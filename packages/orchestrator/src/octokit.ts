@@ -69,6 +69,7 @@ interface GhRun {
 }
 
 const ThrottledOctokit = Octokit.plugin(throttling);
+const noop = (): void => undefined;
 
 function toIssue(i: GhIssue): IssueData {
   return {
@@ -135,6 +136,15 @@ export function createOctokitGitHub(options: OctokitOptions): OctokitGitHub {
       auth: await options.token(),
       ...(options.baseUrl !== undefined ? { baseUrl: options.baseUrl } : {}),
       throttle: throttleOptions(),
+      // Les 304 attendus sont journalisés en `warn` par Octokit : silence, les erreurs restent.
+      log: {
+        debug: noop,
+        info: noop,
+        warn: noop,
+        error: (message: string) => {
+          console.error(message);
+        },
+      },
     });
     return client;
   }
