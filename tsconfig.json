@@ -8,6 +8,7 @@
     "packages/*/src",
     "packages/*/test",
     "packages/*/scripts",
-    "packages/*/vitest.config.ts"
+    "packages/*/vitest.config.ts",
+    "packages/*/vitest.live.config.ts"
   ]
 }

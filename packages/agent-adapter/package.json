@@ -1,0 +1,23 @@
+{
+  "name": "@factory/agent-adapter",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --coverage",
+    "test:live": "FACTORY_LIVE=1 vitest run --config vitest.live.config.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.296",
+    "@factory/conventions": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

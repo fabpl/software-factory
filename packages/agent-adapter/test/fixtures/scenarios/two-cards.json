@@ -1,0 +1,99 @@
+{
+  "start": [
+    { "tool": "read_rules" },
+    {
+      "tool": "update_contract",
+      "input": {
+        "items": [
+          { "id": "H1", "kind": "hypothesis", "text": "Une hypothèse.", "status": "pending" }
+        ]
+      }
+    },
+    { "event": { "type": "agent.message", "text": "Je pose la première question." } },
+    {
+      "tool": "emit_card",
+      "input": {
+        "kind": "question",
+        "title": "Où stocker ?",
+        "context": "Confiance : 40 %.",
+        "options": [
+          { "letter": "A", "text": "Fichier", "consequence": "Perdu." },
+          { "letter": "B", "text": "Commentaire", "consequence": "Durable." }
+        ],
+        "recommendation": { "letter": "B", "text": "Durable." },
+        "reversibility": "reversible"
+      }
+    },
+    { "event": { "type": "agent.message", "text": "Jamais atteint." } }
+  ],
+  "resume": [
+    [
+      {
+        "tool": "update_contract",
+        "input": {
+          "items": [
+            {
+              "id": "D1",
+              "kind": "decision",
+              "text": "Commentaire de PR.",
+              "status": "pending",
+              "note": "carte #1"
+            }
+          ]
+        }
+      },
+      {
+        "tool": "emit_card",
+        "input": {
+          "kind": "decision",
+          "title": "Nommage",
+          "context": "Réversible.",
+          "options": [
+            { "letter": "A", "text": "inbox", "consequence": "court" },
+            { "letter": "B", "text": "mailbox", "consequence": "long" }
+          ],
+          "recommendation": { "letter": "A", "text": "Court." },
+          "reversibility": "reversible"
+        }
+      },
+      {
+        "tool": "emit_card",
+        "input": {
+          "kind": "arbitration",
+          "title": "Nouvelle dépendance",
+          "context": "Bloquant.",
+          "options": [
+            { "letter": "A", "text": "Oui", "consequence": "+1 dépendance" },
+            { "letter": "B", "text": "Non", "consequence": "code maison" }
+          ],
+          "recommendation": { "letter": "B", "text": "Code maison." },
+          "reversibility": "irreversible"
+        }
+      }
+    ],
+    [
+      {
+        "tool": "request_adr",
+        "input": {
+          "cardId": "card-3",
+          "slug": "pas-de-dependance",
+          "title": "Pas de dépendance",
+          "origin": "implementation",
+          "reversibility": "irreversible",
+          "question": "Ajouter une dépendance ?",
+          "context": "Bloquant.",
+          "options": [{ "letter": "B", "label": "Non", "pros": "simple", "cons": "code à écrire" }],
+          "chosen": "B",
+          "decision": "Code maison.",
+          "consequences": ["Écrire le parseur."]
+        }
+      },
+      {
+        "tool": "update_evidence",
+        "input": {
+          "lines": [{ "criterion": "C1", "proof": "`contract.roundtrip`", "state": "pending" }]
+        }
+      }
+    ]
+  ]
+}

@@ -26,4 +26,8 @@ export type ContractInput = Pick<Contract, 'items'>;
 export type EvidenceInput = Pick<Evidence, 'lines'>;
 
 /** Ce que l'agent fournit à `request_adr` ; l'orchestrateur réserve le numéro, la date et le statut. */
-export type AdrRequest = Omit<AdrInput, 'number' | 'date' | 'status'> & { cardId: string };
+export type AdrRequest = Omit<AdrInput, 'number' | 'date' | 'status'> & {
+  cardId: string;
+  /** Base du nom de fichier : `docs/adr/NNNN-<slug>.md`. */
+  slug: string;
+};
