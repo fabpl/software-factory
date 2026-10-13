@@ -15,7 +15,7 @@ pnpm factory <commande>                        # pilotage sans interface, voir c
 |---|---|
 | `state` | État observé, lecture seule (ne crée pas les étiquettes, n'exécute rien) |
 | `tick` | Un tick ; attend la fin du run éventuel en affichant ses événements |
-| `start-framing <issue>` | `phase:intent → phase:framing`, puis tick (le run de cadrage démarre) |
+| `start-framing <issue>` | `phase:intent → phase:framing`, puis tick (le run de cadrage démarre). Sur une tâche déjà en cadrage dont le run est `finished` sans contrat final : relance avec le contrat en contexte |
 | `start-implementation <issue>` | Refuse si le contrat est incomplet ; `phase:framing → phase:implementation` |
 | `send-back <issue> <raison>` | Retour en cadrage depuis `implementation`, `evidence` ou `verdict` |
 | `answer <card> <A\|B\|…\|keep\|reverse\|done\|other> [texte]` | Publie `factory:answer`, puis tick (reprise du run) |
@@ -56,6 +56,7 @@ test/fixtures/full-loop.json   scénario : 3 cartes de cadrage, décision + arbi
 9. **Tâches fermées** : relues seulement si un worktree local existe (nettoyage), jamais affichées.
 10. **Pagination** : 100 issues ouvertes, 100 PR, 100 commentaires par conversation (jalon 1).
 11. **Journal de CI rouge** : non récupéré au jalon 1 (l'agent ne peut ouvrir ni l'URL ni `gh`). La consigne de reprise lui demande de reproduire l'échec localement avec les commandes du dépôt ; l'URL reste pour l'humain. Suite prévue : lire les jobs en échec via l'API Actions et les mettre dans le prompt.
+13. **Relance du cadrage** : `start-framing` sur une tâche déjà en `framing` dont le bloc de run est `finished` passe ce bloc à `failed` ; le tick suivant relance un run neuf avec le contrat à jour et la consigne de ne pas reposer les questions tranchées. Un bloc `waiting` (carte ouverte) n'est jamais forcé.
 12. **Verrou** : `run:active` + assignation sont posés pour tout lancement de run. Les écritures sans run (changement de phase, `proven`, cartes de l'orchestrateur, étiquettes `needs`, contrat normalisé) sont faites sans verrou : une seule écriture idempotente chacune, après relecture de GitHub.
 
 ## Vérifications

@@ -257,6 +257,75 @@ describe('orchestrator', () => {
     expect(github.pulls).toHaveLength(0);
   });
 
+  it('startFraming sur une tâche déjà en cadrage : relance si le bloc est finished, sinon rien', async () => {
+    const prompts: string[] = [];
+    const adapter = adapterOf((s) => {
+      prompts.push(s.prompt);
+      return events(s, [{ type: 'run.finished', sessionId: 'x', turns: 1, costUsd: 0 }]);
+    });
+    const { github, options, issue } = setup({ adapter });
+    github.addIssue({
+      number: issue,
+      title: 'Relance',
+      labels: ['phase:framing'],
+      body: CONTRACT_BODY,
+    });
+    github.addComment(
+      issue,
+      '<!-- factory:run session=s1 skill=framing@0.1.0 turns=1 cost_usd=0.10 updated=2026-10-13T10:00:00Z status=finished -->',
+    );
+    const o = new Orchestrator(options);
+    await o.tick();
+    await o.waitForRun();
+    expect(prompts).toHaveLength(0);
+    await o.startFraming(issue);
+    await o.waitForRun();
+    expect(prompts).toHaveLength(1);
+    expect(prompts[0]).toContain('Cadrage relancé');
+    expect(
+      github
+        .commentsOf(issue)
+        .map((c) => parseRunBlock(c.body))
+        .filter((r) => r.ok),
+    ).toHaveLength(1);
+    // Bloc `waiting` (carte ouverte) : start-framing ne force rien.
+    github.addComment(
+      issue,
+      '<!-- factory:card id=card-1 kind=question origin=framing reversibility=reversible status=open skill=framing@0.1.0 -->\n### ❓ Question 1 — Q\n\n**Contexte** — c\n\n**Options**\n- **A.** a\n- **B.** b\n',
+    );
+    await o.startFraming(issue);
+    await o.waitForRun();
+    expect(prompts).toHaveLength(1);
+    // Sans bloc de run, ou bloc illisible : rien à relancer.
+    github.addIssue({
+      number: issue + 1,
+      title: 'Sans bloc',
+      labels: ['phase:framing'],
+      body: CONTRACT_BODY,
+    });
+    github.addIssue({
+      number: issue + 2,
+      title: 'Bloc cassé',
+      labels: ['phase:framing'],
+      body: CONTRACT_BODY,
+    });
+    github.addComment(issue + 2, '<!-- factory:run skill=framing@0.1.0 -->');
+    github.addComment(
+      issue + 2,
+      '<!-- factory:card id=card-1 kind=question origin=framing reversibility=reversible status=open skill=framing@0.1.0 -->\n### ❓ Question 1 — Q\n\n**Contexte** — c\n\n**Options**\n- **A.** a\n- **B.** b\n',
+    );
+    github.addComment(
+      issue + 1,
+      '<!-- factory:card id=card-1 kind=question origin=framing reversibility=reversible status=open skill=framing@0.1.0 -->\n### ❓ Question 1 — Q\n\n**Contexte** — c\n\n**Options**\n- **A.** a\n- **B.** b\n',
+    );
+    next += 3;
+    await o.startFraming(issue + 1);
+    await o.startFraming(issue + 2);
+    await o.waitForRun();
+    expect(prompts).toHaveLength(1);
+    await worktrees.remove(issue);
+  });
+
   it('answerCard : carte inconnue, réponse refusée, pas de doublon de réponse', async () => {
     const { github, options, issue } = setup();
     github.addIssue({ number: issue, title: 'T', labels: ['phase:framing', 'needs:arbitration'] });

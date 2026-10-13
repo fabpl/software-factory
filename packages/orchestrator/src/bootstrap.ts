@@ -74,6 +74,9 @@ export async function bootstrap(options: BootstrapOptions): Promise<Orchestrator
       onMessage: (runId, message) => {
         sdkLog.write(runId, { message });
       },
+      onStderr: (runId, line) => {
+        sdkLog.write(runId, { stderr: line });
+      },
     }),
     worktrees: createWorktrees({ root: options.userData, ref, cloneUrl: github.cloneUrl() }),
     log,

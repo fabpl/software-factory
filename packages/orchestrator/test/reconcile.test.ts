@@ -49,6 +49,18 @@ describe('reconcile — cadrage', () => {
     expect(PROMPTS.framing(task())).toContain('Intention.');
   });
 
+  it('framing avec bloc failed sans verrou → relance avec le contrat en contexte', () => {
+    const state = task({ run: runBlock({ status: 'failed' }), contract: CONTRACT_PENDING });
+    expect(reconcile(state, local(), REPO)).toEqual([
+      {
+        type: 'start-run',
+        issue: 7,
+        run: { skill: 'framing', prompt: PROMPTS.framingRelaunch(state) },
+      },
+    ]);
+    expect(PROMPTS.framingRelaunch(state)).toContain('Cadrage relancé');
+  });
+
   it('framing avec run:failed → attend la carte Run interrompu', () => {
     expect(reconcile(task({ lock: { active: false, failed: true } }), local(), REPO)).toEqual([]);
   });

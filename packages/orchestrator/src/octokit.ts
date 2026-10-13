@@ -136,15 +136,9 @@ export function createOctokitGitHub(options: OctokitOptions): OctokitGitHub {
       auth: await options.token(),
       ...(options.baseUrl !== undefined ? { baseUrl: options.baseUrl } : {}),
       throttle: throttleOptions(),
-      // Les 304 attendus sont journalisés en `warn` par Octokit : silence, les erreurs restent.
-      log: {
-        debug: noop,
-        info: noop,
-        warn: noop,
-        error: (message: string) => {
-          console.error(message);
-        },
-      },
+      // Octokit journalise chaque requête (304 compris, en `error` via RequestError) et les avis de
+      // dépréciation : silence total, les erreurs réelles remontent par exception.
+      log: { debug: noop, info: noop, warn: noop, error: noop },
     });
     return client;
   }

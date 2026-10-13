@@ -9,6 +9,8 @@ import { deferredCard, translate } from './translate.js';
 export interface ClaudeCodeAdapterOptions {
   /** Flux `SDKMessage` brut, pour le journal JSONL de la salle des machines. */
   onMessage?: (runId: string, message: SDKMessage) => void;
+  /** Sortie d'erreur du processus Claude Code, ligne par ligne (diagnostic). */
+  onStderr?: (runId: string, line: string) => void;
 }
 
 interface ActiveRun {
@@ -51,7 +53,14 @@ export class ClaudeCodeAdapter implements AgentAdapter {
     state.pendingAnswer = answer;
     if (spec.sessionId !== undefined) state.sessionId = spec.sessionId;
     const controller = new AbortController();
-    const q = query({ prompt, options: buildOptions(spec, state, controller) });
+    const options = buildOptions(spec, state, controller);
+    const onStderr = this.options.onStderr;
+    if (onStderr) {
+      options.stderr = (data: string) => {
+        for (const line of data.split('\n')) if (line.trim() !== '') onStderr(spec.runId, line);
+      };
+    }
+    const q = query({ prompt, options });
     this.runs.set(spec.runId, { controller, query: q });
     const ctx = { requiredTools: spec.requiredTools };
     let terminated = false;

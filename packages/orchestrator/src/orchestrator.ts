@@ -6,6 +6,7 @@ import {
   parseContract,
   parseEvidence,
   parseLabels,
+  parseRunBlock,
   serializeAnswer,
   serializeCard,
   serializeEvidence,
@@ -177,8 +178,28 @@ export class Orchestrator {
 
   // -- commandes : écrivent dans GitHub puis forcent un tick -------------------
 
+  /**
+   * `phase:intent → phase:framing`. Sur une tâche déjà en cadrage dont le run est `finished`
+   * (contrat laissé inachevé), relance : le bloc de run passe `failed`, le tick suivant redémarre
+   * avec le contrat en contexte.
+   */
   async startFraming(issue: number): Promise<void> {
-    await this.setPhase(issue, 'framing', ['intent']);
+    const changed = await this.setPhase(issue, 'framing', ['intent']);
+    if (!changed) {
+      const { github } = this.options;
+      const comments = await github.listComments(issue);
+      const block = findMarked(
+        comments,
+        (name, attrs) => name === 'run' && attrs.skill?.startsWith('framing@') === true,
+      );
+      const parsed = block ? parseRunBlock(block.body) : undefined;
+      if (block && parsed?.ok === true && parsed.value.status === 'finished') {
+        await github.updateComment(
+          block.id,
+          serializeRunBlock({ ...parsed.value, status: 'failed' }),
+        );
+      }
+    }
     await this.tick();
   }
 

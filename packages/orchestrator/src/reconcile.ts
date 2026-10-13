@@ -93,6 +93,8 @@ export const PROMPTS = {
     `Cadrage de l'issue #${String(state.issue)} « ${state.title} ».\n\nIntention de l'humain :\n\n${intentOf(state.body)}`,
   implementation: (state: TaskState): string =>
     `Implémentation du contrat de l'issue #${String(state.issue)} « ${state.title} ». Commence par read_rules, puis découpe les critères validés en tranches.`,
+  framingRelaunch: (state: TaskState): string =>
+    `Cadrage relancé de l'issue #${String(state.issue)} « ${state.title} » : le run précédent s'est terminé sans contrat final. Le contrat ci-dessus est à jour des cartes déjà répondues (voir les notes « carte #N ») ; ne repose aucune question déjà tranchée. Reprends à l'étape où il s'est arrêté et termine le contrat.\n\nIntention de l'humain :\n\n${intentOf(state.body)}`,
   resumeAfterInterruption:
     'Le run précédent a été interrompu. Reprends là où tu en étais, en relisant le contrat et les règles.',
   reverse: (cardId: string, text: string): string =>
@@ -201,13 +203,10 @@ function framingActions(state: TaskState, local: LocalView): Action[] {
   if (state.lock !== undefined) return [];
   if (openCards(state).length > 0) return [];
   if (state.run?.status === 'finished') return [];
-  return [
-    {
-      type: 'start-run',
-      issue: state.issue,
-      run: { skill: 'framing', prompt: PROMPTS.framing(state) },
-    },
-  ];
+  // Bloc `failed` sans verrou : relance demandée (`start-framing` sur une tâche déjà en cadrage).
+  const prompt =
+    state.run?.status === 'failed' ? PROMPTS.framingRelaunch(state) : PROMPTS.framing(state);
+  return [{ type: 'start-run', issue: state.issue, run: { skill: 'framing', prompt } }];
 }
 
 function implementationActions(state: TaskState, local: LocalView, repo: RepoView): Action[] {
