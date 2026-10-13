@@ -102,22 +102,11 @@
         "list-agents",
         "team-onboarding"
       ],
-      "terminal_slash_commands": [
-        "doctor",
-        "color",
-        "focus",
-        "reload-plugins"
-      ],
+      "terminal_slash_commands": ["doctor", "color", "focus", "reload-plugins"],
       "apiKeySource": "none",
       "claude_code_version": "2.1.296",
       "output_style": "default",
-      "agents": [
-        "claude",
-        "Explore",
-        "general-purpose",
-        "Plan",
-        "statusline-setup"
-      ],
+      "agents": ["claude", "Explore", "general-purpose", "Plan", "statusline-setup"],
       "skills": [
         "deep-research",
         "design",
@@ -298,10 +287,7 @@
       "uuid": "304d41dc-7c9d-4b63-bdd3-15a2612d8dd0",
       "timestamp": "2026-10-13T15:52:11.031Z",
       "tool_use_result": {
-        "matches": [
-          "mcp__factory__read_rules",
-          "mcp__factory__emit_card"
-        ],
+        "matches": ["mcp__factory__read_rules", "mcp__factory__emit_card"],
         "query": "select:mcp__factory__read_rules,mcp__factory__emit_card",
         "total_deferred_tools": 17
       },
@@ -849,22 +835,11 @@
         "list-agents",
         "team-onboarding"
       ],
-      "terminal_slash_commands": [
-        "doctor",
-        "color",
-        "focus",
-        "reload-plugins"
-      ],
+      "terminal_slash_commands": ["doctor", "color", "focus", "reload-plugins"],
       "apiKeySource": "none",
       "claude_code_version": "2.1.296",
       "output_style": "default",
-      "agents": [
-        "claude",
-        "Explore",
-        "general-purpose",
-        "Plan",
-        "statusline-setup"
-      ],
+      "agents": ["claude", "Explore", "general-purpose", "Plan", "statusline-setup"],
       "skills": [
         "deep-research",
         "design",
