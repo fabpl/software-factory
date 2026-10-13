@@ -93,8 +93,18 @@ export const PROMPTS = {
     `Cadrage de l'issue #${String(state.issue)} « ${state.title} ».\n\nIntention de l'humain :\n\n${intentOf(state.body)}`,
   implementation: (state: TaskState): string =>
     `Implémentation du contrat de l'issue #${String(state.issue)} « ${state.title} ». Commence par read_rules, puis découpe les critères validés en tranches.`,
-  framingRelaunch: (state: TaskState): string =>
-    `Cadrage relancé de l'issue #${String(state.issue)} « ${state.title} » : le run précédent s'est terminé sans contrat final. Le contrat ci-dessus est à jour des cartes déjà répondues (voir les notes « carte #N ») ; ne repose aucune question déjà tranchée. Reprends à l'étape où il s'est arrêté et termine le contrat.\n\nIntention de l'humain :\n\n${intentOf(state.body)}`,
+  framingRelaunch: (state: TaskState): string => {
+    const answered = state.cards.flatMap((c) =>
+      c.card.origin === 'framing' && c.answer
+        ? [`- Carte ${c.card.id} « ${c.card.title} » : ${answerLine(c.answer)}`]
+        : [],
+    );
+    const history =
+      answered.length > 0
+        ? `Cartes déjà répondues par l'humain (ne les repose pas ; reporte leurs réponses dans le contrat si ce n'est pas fait) :\n${answered.join('\n')}`
+        : 'Aucune carte répondue.';
+    return `Cadrage relancé de l'issue #${String(state.issue)} « ${state.title} » : le run précédent s'est terminé sans contrat final. Le contrat ci-dessus est l'état connu ; reprends à l'étape où il s'est arrêté et termine-le.\n\n${history}\n\nIntention de l'humain :\n\n${intentOf(state.body)}`;
+  },
   resumeAfterInterruption:
     'Le run précédent a été interrompu. Reprends là où tu en étais, en relisant le contrat et les règles.',
   reverse: (cardId: string, text: string): string =>
@@ -104,6 +114,11 @@ export const PROMPTS = {
   ciRed: (runUrl: string, attempt: number): string =>
     `La CI est rouge sur le dernier push (tentative ${String(attempt)} sur ${String(MAX_CI_RETRIES)}). Tu ne peux pas ouvrir son journal (${runUrl}) : relance les commandes du dépôt dans le worktree (tests, lint, typecheck) pour reproduire l'échec, corrige la tranche concernée sans toucher au contrat, puis update_evidence.`,
 } as const;
+
+function answerLine(answer: CardAnswer): string {
+  const choice = answer.choice.kind === 'option' ? answer.choice.letter : answer.choice.kind;
+  return answer.text === '' ? choice : `${choice}. ${answer.text}`;
+}
 
 function hasCard(state: TaskState, title: string, status?: CardStatus): boolean {
   return state.cards.some(

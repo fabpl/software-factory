@@ -70,6 +70,7 @@ interface GhRun {
 
 const ThrottledOctokit = Octokit.plugin(throttling);
 const noop = (): void => undefined;
+const SILENT = { debug: noop, info: noop, warn: noop, error: noop };
 
 function toIssue(i: GhIssue): IssueData {
   return {
@@ -138,7 +139,9 @@ export function createOctokitGitHub(options: OctokitOptions): OctokitGitHub {
       throttle: throttleOptions(),
       // Octokit journalise chaque requête (304 compris, en `error` via RequestError) et les avis de
       // dépréciation : silence total, les erreurs réelles remontent par exception.
-      log: { debug: noop, info: noop, warn: noop, error: noop },
+      log: SILENT,
+      // `@octokit/request` lit son journal dans `request.log` (sinon `console`) : même silence.
+      request: { log: SILENT },
     });
     return client;
   }

@@ -58,7 +58,19 @@ describe('reconcile — cadrage', () => {
         run: { skill: 'framing', prompt: PROMPTS.framingRelaunch(state) },
       },
     ]);
-    expect(PROMPTS.framingRelaunch(state)).toContain('Cadrage relancé');
+    expect(PROMPTS.framingRelaunch(state)).toContain('Aucune carte répondue.');
+    const withHistory = task({
+      run: runBlock({ status: 'failed' }),
+      cards: [
+        card(QUESTION, { status: 'answered', answer: option('card-1', 'B', 'et note-le') }),
+        card(QUESTION, { id: 'card-2', status: 'answered', answer: simple('card-2', 'done') }),
+        card(QUESTION, { id: 'card-3' }),
+      ],
+    });
+    const prompt = PROMPTS.framingRelaunch(withHistory);
+    expect(prompt).toContain('- Carte card-1 « Où stocker ? » : B. et note-le');
+    expect(prompt).toContain('- Carte card-2 « Où stocker ? » : done');
+    expect(prompt).not.toContain('card-3');
   });
 
   it('framing avec run:failed → attend la carte Run interrompu', () => {
