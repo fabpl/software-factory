@@ -156,7 +156,20 @@ Un seul commentaire, réécrit par l'agent à chaque mise à jour, identifié pa
 - Numérotation séquentielle sur quatre chiffres. Le numéro est réservé au moment de la réponse.
 - Les `decision` `reversible` gardées ne produisent pas d'ADR. Elles restent dans la PR.
 
-## 7. Traçabilité des skills
+## 7. Bloc de run (commentaire caché)
+
+Ajouté à l'approbation de la spec `agent-adapter`. Un commentaire sans rendu humain, un par phase, réécrit par l'orchestrateur à chaque fin de run, dans l'issue (cadrage) ou la PR (implémentation).
+
+```markdown
+<!-- factory:run session=sess_01abc skill=framing@0.1.0 turns=14 cost_usd=0.42 updated=2026-10-13T10:22:00Z status=waiting card=card-7 -->
+```
+
+- `session` : identifiant de session de l'agent, nécessaire à la reprise.
+- `status` : `waiting` (carte ouverte), `finished`, `failed`.
+- `card` : identifiant de la carte qui a arrêté le run, si `waiting`.
+- Si le bloc est absent ou que la session n'est plus reprenable, l'orchestrateur relance un run neuf avec le contrat et la carte répondue en contexte : rien n'est perdu, seule la mémoire de travail de l'agent l'est.
+
+## 8. Traçabilité des skills
 
 Chaque bloc contrat, carte et preuves porte `skill=<nom>@<semver>`. L'inbox l'affiche, l'orchestrateur le vérifie contre la skill embarquée et signale un écart.
 
@@ -184,6 +197,7 @@ packages/conventions/
   src/card.ts          → types, parse, serialize, answer
   src/evidence.ts      → types, parse, serialize
   src/adr.ts           → template et numérotation
+  src/run.ts           → bloc de run, parse, serialize
   src/index.ts
   test/fixtures/       → fichiers Markdown écrits à la main, un par cas
   test/*.test.ts
@@ -219,9 +233,13 @@ export function parseContract(body: string): Result<Contract, ContractError> {
 - **Demander d'abord** : ajouter une étiquette, un `kind`, un statut ; ajouter une dépendance.
 - **Jamais** : appeler l'API GitHub depuis ce paquet ; importer Electron ; stocker un état hors du Markdown.
 
+## Amendements
+
+- 2026-10-13 : §7 bloc de run ajouté (spec `agent-adapter`, hypothèse 5).
+
 ## Critères de succès
 
-1. Les sept sections de format ci-dessus ont chacune au moins une fixture et un test vert.
+1. Les huit sections de format ci-dessus ont chacune au moins une fixture et un test vert.
 2. Un contrat, une carte et un bloc de preuves écrits à la main dans une vraie issue de ce dépôt sont lus par le paquet sans erreur.
 3. `pnpm --filter @factory/conventions test` passe en CI GitHub Actions sur ce dépôt.
 4. Le paquet n'a aucune dépendance de production hors `zod`.
