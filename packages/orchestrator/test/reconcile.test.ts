@@ -71,7 +71,6 @@ describe('reconcile — cadrage', () => {
       type: 'consume-answer',
       cardId: 'card-1',
       newStatus: 'answered',
-      addBlockingRule: false,
       run: { skill: 'framing', sessionId: 'sess-1', answer: { cardId: 'card-1' } },
     });
   });
@@ -95,9 +94,18 @@ describe('reconcile — cadrage', () => {
     expect(action?.type === 'consume-answer' && action.run?.sessionId).toBeUndefined();
   });
 
-  it('item coché à la main → contrat réécrit', () => {
+  it('item coché à la main → contrat réécrit sous sa forme canonique', () => {
+    const body =
+      'Intention.\n\n<!-- factory:contract version=1 skill=framing@0.1.0 -->\nvieux\n<!-- /factory:contract -->\n';
+    const state = task({ body, contractDirty: true, contract: CONTRACT_FULL });
+    const [action] = reconcile(state, local(), REPO);
+    expect(action).toMatchObject({ type: 'normalize-contract', issue: 7 });
+    expect(
+      action?.type === 'normalize-contract' &&
+        action.body.startsWith('Intention.\n\n<!-- factory:contract version=2'),
+    ).toBe(true);
     expect(reconcile(task({ contractDirty: true }), local(), REPO)).toEqual([
-      { type: 'normalize-contract', issue: 7 },
+      { type: 'start-run', issue: 7, run: { skill: 'framing', prompt: PROMPTS.framing(task()) } },
     ]);
   });
 
@@ -133,8 +141,9 @@ describe('reconcile — réponses aux cartes', () => {
         type: 'consume-answer',
         issue: 7,
         cardId: 'card-1',
+        commentId: 1,
+        card: state.cards[0]?.card,
         newStatus: 'kept',
-        addBlockingRule: false,
       },
     ]);
   });
@@ -150,7 +159,7 @@ describe('reconcile — réponses aux cartes', () => {
     expect(action).toMatchObject({
       type: 'consume-answer',
       newStatus: 'reversed',
-      addBlockingRule: true,
+      blockingRule: 'Nommage (désaveu sur #7, carte card-1) : Ça aurait dû me bloquer.',
       run: {
         skill: 'implementation',
         sessionId: 'sess-1',
@@ -165,7 +174,8 @@ describe('reconcile — réponses aux cartes', () => {
       cards: [card(DECISION, { answer: simple('card-1', 'reverse') })],
     });
     const [action] = reconcile(state, local(), REPO);
-    expect(action).toMatchObject({ type: 'consume-answer', addBlockingRule: false });
+    expect(action).toMatchObject({ type: 'consume-answer' });
+    expect(action?.type === 'consume-answer' && action.blockingRule).toBeUndefined();
     expect(action?.type === 'consume-answer' && action.run?.sessionId).toBeUndefined();
   });
 
@@ -208,8 +218,9 @@ describe('reconcile — réponses aux cartes', () => {
         type: 'consume-answer',
         issue: 7,
         cardId: 'card-1',
+        commentId: 1,
+        card: state.cards[0]?.card,
         newStatus: 'done',
-        addBlockingRule: false,
       },
     ]);
   });
@@ -229,8 +240,9 @@ describe('reconcile — réponses aux cartes', () => {
         type: 'consume-answer',
         issue: 7,
         cardId: 'card-2',
+        commentId: 1,
+        card: interrupted.card,
         newStatus: 'done',
-        addBlockingRule: false,
       },
     ]);
   });
@@ -295,8 +307,21 @@ describe('reconcile — implémentation et CI', () => {
         ]),
       }),
     });
-    expect(reconcile(state, local(), REPO)).toEqual([
-      { type: 'mark-proven', issue: 7, pr: 20, criteria: ['C1'], runUrl: 'https://ci/1' },
+    expect(reconcile(state, local(), REPO)).toEqual([]); // commentaire de preuves inconnu : rien à éditer
+    const withComment = implementation({ pr: pull({ ...state.pr, evidenceCommentId: 55 }) });
+    expect(reconcile(withComment, local(), REPO)).toEqual([
+      {
+        type: 'mark-proven',
+        issue: 7,
+        pr: 20,
+        criteria: ['C1'],
+        runUrl: 'https://ci/1',
+        commentId: 55,
+        evidence: evidence([
+          { criterion: 'C1', proof: '[run CI](https://ci/1) — `a`', state: 'proven' },
+          { criterion: 'C2', proof: '[capture](https://x/y.png)', state: 'to-review' },
+        ]),
+      },
     ]);
   });
 
@@ -316,6 +341,7 @@ describe('reconcile — implémentation et CI', () => {
           skill: 'implementation',
           prompt: PROMPTS.ciRed('https://ci/2', 1),
           sessionId: 'sess-i',
+          ciRetry: true,
         },
       },
     ]);

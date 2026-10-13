@@ -6,8 +6,11 @@ import {
   queueFor,
   shouldHaveBlocked,
   statusAfter,
+  writeContract,
+  type Card,
   type CardAnswer,
   type CardStatus,
+  type Evidence,
   type Need,
   type Phase,
 } from '@factory/conventions';
@@ -49,15 +52,27 @@ export type Action =
       type: 'consume-answer';
       issue: number;
       cardId: string;
+      /** Commentaire de la carte, à réécrire avec le nouveau statut. */
+      commentId: number;
+      card: Card;
       newStatus: CardStatus;
-      /** Réponse `reverse` contenant « aurait dû bloquer » : ligne Bloquant dans `rules.md`. */
-      addBlockingRule: boolean;
+      /** Réponse `reverse` contenant « aurait dû bloquer » : ligne à ajouter sous Bloquant dans `rules.md`. */
+      blockingRule?: string;
       run?: RunRequest;
     }
-  | { type: 'normalize-contract'; issue: number }
+  | { type: 'normalize-contract'; issue: number; body: string }
   | { type: 'fix-needs'; issue: number; needs: Need[] }
   | { type: 'start-run'; issue: number; run: RunRequest }
-  | { type: 'mark-proven'; issue: number; pr: number; criteria: string[]; runUrl: string }
+  | {
+      type: 'mark-proven';
+      issue: number;
+      pr: number;
+      criteria: string[];
+      runUrl: string;
+      /** Commentaire de preuves et son nouveau contenu, calculés ici. */
+      commentId: number;
+      evidence: Evidence;
+    }
   | { type: 'publish-action-card'; issue: number; title: string; context: string }
   | { type: 'set-phase'; issue: number; phase: Phase; markReady: boolean };
 
@@ -125,46 +140,43 @@ function resumeRun(
 
 function consumeAnswer(state: TaskState, c: TaskCard, answer: CardAnswer): Action {
   const skill = skillForPhase(state.phase);
-  const base = { type: 'consume-answer' as const, issue: state.issue, cardId: c.card.id };
-  const newStatus = statusAfter(answer);
+  const base = {
+    type: 'consume-answer' as const,
+    issue: state.issue,
+    cardId: c.card.id,
+    commentId: c.location.commentId,
+    card: c.card,
+    newStatus: statusAfter(answer),
+  };
   const kind = c.card.kind;
 
   if (kind === 'question' || kind === 'arbitration') {
     const prompt = skill === 'framing' ? PROMPTS.framing(state) : PROMPTS.implementation(state);
-    return {
-      ...base,
-      newStatus,
-      addBlockingRule: false,
-      run: resumeRun(state, skill, answer, prompt, c.card.id),
-    };
+    return { ...base, run: resumeRun(state, skill, answer, prompt, c.card.id) };
   }
   if (kind === 'decision') {
-    if (answer.choice.kind !== 'reverse') return { ...base, newStatus, addBlockingRule: false };
+    if (answer.choice.kind !== 'reverse') return base;
     const run: RunRequest = { skill, prompt: PROMPTS.reverse(c.card.id, answer.text), answer };
     if (state.run !== undefined) run.sessionId = state.run.session;
-    return { ...base, newStatus, addBlockingRule: shouldHaveBlocked(answer), run };
+    if (!shouldHaveBlocked(answer)) return { ...base, run };
+    const blockingRule = `${c.card.title} (désaveu sur #${String(state.issue)}, carte ${c.card.id}) : ${answer.text}`;
+    return { ...base, blockingRule, run };
   }
   // action
   if (c.card.title === CARD_TITLES.runInterrupted) {
     // Le run attendait une carte encore ouverte : c'est la réponse à cette carte qui relancera.
     const waitingOn = state.run?.status === 'waiting' ? state.run.card : undefined;
-    if (waitingOn !== undefined && openCards(state).some((o) => o.card.id === waitingOn)) {
-      return { ...base, newStatus, addBlockingRule: false };
-    }
+    if (waitingOn !== undefined && openCards(state).some((o) => o.card.id === waitingOn))
+      return base;
     const run: RunRequest = { skill, prompt: PROMPTS.resumeAfterInterruption, answer };
     if (state.run !== undefined) run.sessionId = state.run.session;
-    return { ...base, newStatus, addBlockingRule: false, run };
+    return { ...base, run };
   }
   if (state.run?.status === 'waiting' && state.run.card === c.card.id) {
     const prompt = PROMPTS.actionDone(c.card.id, answer.text);
-    return {
-      ...base,
-      newStatus,
-      addBlockingRule: false,
-      run: resumeRun(state, skill, answer, prompt, c.card.id),
-    };
+    return { ...base, run: resumeRun(state, skill, answer, prompt, c.card.id) };
   }
-  return { ...base, newStatus, addBlockingRule: false };
+  return base;
 }
 
 function framingActions(state: TaskState, local: LocalView): Action[] {
@@ -215,14 +227,30 @@ function implementationActions(state: TaskState, local: LocalView, repo: RepoVie
   const lines = pr.evidence?.lines ?? [];
   const pending = lines.filter((l) => l.state === 'pending').map((l) => l.criterion);
 
-  if (pr.ci.kind === 'green' && pending.length > 0) {
+  if (
+    pr.ci.kind === 'green' &&
+    pending.length > 0 &&
+    pr.evidence &&
+    pr.evidenceCommentId !== undefined
+  ) {
+    const runUrl = pr.ci.url;
+    const evidence: Evidence = {
+      ...pr.evidence,
+      lines: pr.evidence.lines.map((l) =>
+        l.state === 'pending'
+          ? { ...l, state: 'proven', proof: `[run CI](${runUrl}) — ${l.proof}` }
+          : l,
+      ),
+    };
     return [
       {
         type: 'mark-proven',
         issue: state.issue,
         pr: pr.number,
         criteria: pending,
-        runUrl: pr.ci.url,
+        runUrl,
+        commentId: pr.evidenceCommentId,
+        evidence,
       },
     ];
   }
@@ -237,6 +265,7 @@ function implementationActions(state: TaskState, local: LocalView, repo: RepoVie
             skill: 'implementation',
             prompt: PROMPTS.ciRed(pr.ci.url, attempt),
             sessionId: state.run.session,
+            ciRetry: true,
           },
         },
       ];
@@ -313,7 +342,15 @@ export function reconcile(state: TaskState, local: LocalView, repo: RepoView): A
   const answered = openCards(state).find((c) => c.answer !== undefined);
   if (answered?.answer) return [consumeAnswer(state, answered, answered.answer)];
 
-  if (state.contractDirty) return [{ type: 'normalize-contract', issue: state.issue }];
+  if (state.contractDirty && state.contract) {
+    return [
+      {
+        type: 'normalize-contract',
+        issue: state.issue,
+        body: writeContract(state.body, state.contract),
+      },
+    ];
+  }
 
   let actions: Action[];
   switch (state.phase) {

@@ -2,7 +2,7 @@ import { LABEL_DEFINITIONS } from '@factory/conventions';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { createOctokitGitHub } from '../src/octokit.js';
+import { createOctokitGitHub, throttleOptions } from '../src/octokit.js';
 
 const API = 'https://api.github.com';
 const R = `${API}/repos/acme/widget`;
@@ -341,5 +341,49 @@ describe('octokit — écritures', () => {
     expect(created).toEqual(
       LABEL_DEFINITIONS.map((d) => d.name).filter((n) => n !== 'phase:intent'),
     );
+  });
+});
+
+describe('octokit — options', () => {
+  it('throttle : un réessai sur quota primaire, aucun sur quota secondaire', () => {
+    const t = throttleOptions();
+    expect(t.onRateLimit(1, {}, undefined, 0)).toBe(true);
+    expect(t.onRateLimit(1, {}, undefined, 1)).toBe(false);
+    expect(t.onSecondaryRateLimit()).toBe(false);
+  });
+
+  it('baseUrl : GitHub Enterprise', async () => {
+    server.use(http.get('https://ghe.test/api/v3/user', () => HttpResponse.json({ login: 'ent' })));
+    const ghe = createOctokitGitHub({
+      ref: { owner: 'acme', repo: 'widget' },
+      token: () => Promise.resolve('t'),
+      baseUrl: 'https://ghe.test/api/v3',
+    });
+    expect(await ghe.whoami()).toBe('ent');
+  });
+
+  it('issue : étiquettes en chaînes, corps et assignés absents', async () => {
+    server.use(
+      http.get(`${R}/issues/2`, () =>
+        HttpResponse.json({
+          number: 2,
+          title: 't',
+          body: null,
+          labels: ['phase:intent'],
+          state: 'closed',
+          assignees: null,
+          html_url: 'u',
+        }),
+      ),
+    );
+    expect(await github.getIssue(2)).toEqual({
+      number: 2,
+      title: 't',
+      body: '',
+      labels: ['phase:intent'],
+      state: 'closed',
+      assignees: [],
+      url: 'u',
+    });
   });
 });

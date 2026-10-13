@@ -70,6 +70,7 @@ describe('worktree', () => {
   it('branche de cadrage puis remplacement par la branche d’implémentation', async () => {
     const framing = await wt.create(8, 'framing/8', 'main');
     expect((await wt.open(8))?.branch).toBe('framing/8');
+    expect(wt.list()).toEqual([7, 8]);
     await wt.remove(8);
     const impl = await wt.create(8, 'factory/8-slug', 'main');
     expect(impl.branch).toBe('factory/8-slug');

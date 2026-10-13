@@ -10,10 +10,6 @@ export interface RepoRef {
   repo: string;
 }
 
-export function repoSlug(ref: RepoRef): string {
-  return `${ref.owner}/${ref.repo}`;
-}
-
 export interface IssueData {
   number: number;
   title: string;

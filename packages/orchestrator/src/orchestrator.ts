@@ -16,7 +16,6 @@ import {
   writeContract,
   type Card,
   type CardAnswer,
-  type Evidence,
   type ItemStatus,
   type Need,
   type Phase,
@@ -54,6 +53,7 @@ import {
   buildTaskState,
   nextCardId,
   openCards,
+  skillForPhase,
   type InboxState,
   type RunView,
   type TaskState,
@@ -369,7 +369,6 @@ export class Orchestrator {
       lastSync: this.clock(),
       errors,
       ...(this.live ? { run: this.runView(this.live) } : {}),
-      ...(this.blocked ? { blocked: this.blocked } : {}),
     });
     for (const l of this.listeners) l(this.state);
   }
@@ -407,22 +406,16 @@ export class Orchestrator {
         return;
       }
       case 'consume-answer': {
-        const found = task.cards.find((c) => c.card.id === action.cardId);
-        if (!found) return;
         await github.updateComment(
-          found.location.commentId,
-          serializeCard(withStatus(found.card, action.newStatus)),
+          action.commentId,
+          serializeCard(withStatus(action.card, action.newStatus)),
         );
-        if (action.addBlockingRule && found.answer) {
-          const w = await this.worktreeFor(task, action.run?.skill ?? 'implementation');
-          appendRule(
-            w.path,
-            'Bloquant',
-            `${found.card.title} (désaveu sur #${String(task.issue)}, carte ${found.card.id}) : ${found.answer.text}`,
-          );
+        if (action.blockingRule !== undefined) {
+          const w = await this.worktreeFor(task, skillForPhase(task.phase));
+          appendRule(w.path, 'Bloquant', action.blockingRule);
           await worktrees.commitAll(
             w.path,
-            `chore(#${String(task.issue)}): règle Bloquant depuis la carte ${found.card.id}`,
+            `chore(#${String(task.issue)}): règle Bloquant depuis la carte ${action.cardId}`,
           );
           await worktrees.push(w.path, w.branch);
         }
@@ -430,8 +423,7 @@ export class Orchestrator {
         return;
       }
       case 'normalize-contract': {
-        if (task.contract)
-          await github.updateIssueBody(task.issue, writeContract(task.body, task.contract));
+        await github.updateIssueBody(task.issue, action.body);
         return;
       }
       case 'fix-needs': {
@@ -443,16 +435,7 @@ export class Orchestrator {
         return;
       }
       case 'mark-proven': {
-        if (!task.pr?.evidence || task.pr.evidenceCommentId === undefined) return;
-        const evidence: Evidence = {
-          ...task.pr.evidence,
-          lines: task.pr.evidence.lines.map((l) =>
-            action.criteria.includes(l.criterion)
-              ? { ...l, state: 'proven', proof: `[run CI](${action.runUrl}) — ${l.proof}` }
-              : l,
-          ),
-        };
-        await github.updateComment(task.pr.evidenceCommentId, serializeEvidence(evidence));
+        await github.updateComment(action.commentId, serializeEvidence(action.evidence));
         this.ciRetries.delete(task.issue);
         return;
       }
@@ -633,7 +616,7 @@ export class Orchestrator {
       sessionId: request.sessionId,
     });
     live.done = this.consume(task, live, events, handlers, skillTag, worktree).finally(() => {
-      if (this.live === live) this.live = undefined;
+      this.live = undefined;
       // Relire GitHub tout de suite : l'inbox voit les cartes du run sans attendre le prochain tick.
       void this.tick();
     });

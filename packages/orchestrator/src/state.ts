@@ -94,7 +94,7 @@ export function skillForPhase(phase: Phase): 'framing' | 'implementation' {
 }
 
 function skillName(skill: string): string {
-  return skill.split('@')[0] ?? '';
+  return String(skill.split('@')[0]);
 }
 
 /** Intention : tout le corps hors bloc contrat. */
@@ -143,9 +143,10 @@ export function buildTaskState(
   const phase = labels.value.phase;
 
   const fromIssue = collect(input.comments, 'issue', issue.number);
-  const fromPull = input.pull
-    ? collect(input.pull.comments, 'pr', input.pull.data.number)
+  const pull = input.pull
+    ? { ...input.pull, parsed: collect(input.pull.comments, 'pr', input.pull.data.number) }
     : undefined;
+  const fromPull = pull?.parsed;
   const cards = [...fromIssue.cards, ...(fromPull?.cards ?? [])];
   const answers = [...fromIssue.answers, ...(fromPull?.answers ?? [])];
   const attached = attachAnswers(
@@ -188,8 +189,8 @@ export function buildTaskState(
   }
   if (contract) state.contract = contract;
   if (run) state.run = run;
-  if (input.pull) {
-    const p = input.pull.data;
+  if (pull) {
+    const p = pull.data;
     state.pr = {
       number: p.number,
       draft: p.draft,
@@ -198,11 +199,11 @@ export function buildTaskState(
       merged: p.merged,
       open: p.state === 'open',
       url: p.url,
-      ci: ciStatusOf(input.pull.ci),
+      ci: ciStatusOf(pull.ci),
     };
-    if (fromPull?.evidence) {
-      state.pr.evidence = fromPull.evidence.value;
-      state.pr.evidenceCommentId = fromPull.evidence.commentId;
+    if (pull.parsed.evidence) {
+      state.pr.evidence = pull.parsed.evidence.value;
+      state.pr.evidenceCommentId = pull.parsed.evidence.commentId;
     }
   }
   return { ok: true, value: state };
@@ -342,6 +343,7 @@ export function buildInboxState(
   const arbitrate: CardView[] = [];
   const act: CardView[] = [];
   for (const state of tasks) {
+    if (state.closed) continue; // relue pour le nettoyage, plus affichée
     for (const c of openCards(state)) {
       const view = cardView(state, c);
       if (c.card.kind === 'decision') validate.push(view);
@@ -359,7 +361,7 @@ export function buildInboxState(
     validate,
     arbitrate,
     act,
-    tasks: tasks.map(taskView),
+    tasks: tasks.filter((t) => !t.closed).map(taskView),
     lastSync: extra.lastSync,
     errors: extra.errors ?? [],
   };

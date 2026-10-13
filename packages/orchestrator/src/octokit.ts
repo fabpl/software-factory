@@ -106,6 +106,22 @@ function toCiRun(r: GhRun): CiRun {
   return { url: r.html_url, status, conclusion: r.conclusion };
 }
 
+/** Un seul réessai sur quota primaire ; jamais sur quota secondaire (abus) : on laisse l'erreur remonter. */
+export function throttleOptions(): {
+  onRateLimit: (
+    retryAfter: number,
+    options: object,
+    octokit: unknown,
+    retryCount: number,
+  ) => boolean;
+  onSecondaryRateLimit: () => boolean;
+} {
+  return {
+    onRateLimit: (_retryAfter, _options, _octokit, retryCount) => retryCount < 1,
+    onSecondaryRateLimit: () => false,
+  };
+}
+
 export function createOctokitGitHub(options: OctokitOptions): OctokitGitHub {
   const { ref } = options;
   const cache = new Map<string, Cached>();
@@ -118,10 +134,7 @@ export function createOctokitGitHub(options: OctokitOptions): OctokitGitHub {
     client = new ThrottledOctokit({
       auth: await options.token(),
       ...(options.baseUrl !== undefined ? { baseUrl: options.baseUrl } : {}),
-      throttle: {
-        onRateLimit: (_retryAfter, _opts, _o, retryCount) => retryCount < 1,
-        onSecondaryRateLimit: () => false,
-      },
+      throttle: throttleOptions(),
     });
     return client;
   }

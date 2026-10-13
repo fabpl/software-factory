@@ -12,6 +12,7 @@ export default defineConfig({
         'src/state.ts',
         'src/reconcile.ts',
         'src/handlers.ts',
+        'src/rules.ts',
         'src/log.ts',
         'src/orchestrator.ts',
         'src/worktree.ts',
