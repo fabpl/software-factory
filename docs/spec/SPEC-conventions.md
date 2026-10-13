@@ -1,7 +1,7 @@
 # Spec : `conventions`
 
 > Module 1 sur 5 du jalon 1. Voir [CAPABILITY-MAP.md](../CAPABILITY-MAP.md).
-> Statut : **à approuver**.
+> Statut : **approuvée** le 13 octobre 2026.
 
 ## Objectif
 
@@ -226,7 +226,7 @@ export function parseContract(body: string): Result<Contract, ContractError> {
 3. `pnpm --filter @factory/conventions test` passe en CI GitHub Actions sur ce dépôt.
 4. Le paquet n'a aucune dépendance de production hors `zod`.
 
-## Questions ouvertes
+## Questions tranchées à l'approbation
 
-1. Rendre les cartes dans la PR seulement, ou dupliquer un résumé dans l'issue pour que l'issue reste le point d'entrée unique ? Recommandation : PR seulement, l'inbox agrège.
-2. Faut-il une étiquette `factory` pour distinguer les issues gérées par l'app des autres, ou `phase:*` suffit ? Recommandation : `phase:*` suffit.
+1. Les cartes d'implémentation vivent dans la PR seulement. L'inbox agrège issue et PR.
+2. Pas d'étiquette `factory` : une issue est gérée par l'app si et seulement si elle porte une étiquette `phase:*`.
