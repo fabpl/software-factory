@@ -50,8 +50,22 @@ describe('parseEvidence', () => {
       ok: false,
       error: { kind: 'bad-attr', attr: 'contract', value: '' },
     });
+    expect(
+      parseEvidence('<!-- factory:evidence contract=0 skill=implementation@0.1.0 -->'),
+    ).toEqual({
+      ok: false,
+      error: { kind: 'bad-attr', attr: 'contract', value: '0' },
+    });
+    expect(parseEvidence('<!-- factory:evidence contract=1 -->')).toEqual({
+      ok: false,
+      error: { kind: 'bad-attr', attr: 'skill', value: '' },
+    });
+    expect(parseEvidence('<!-- factory:evidence contract=1 skill=x -->')).toEqual({
+      ok: false,
+      error: { kind: 'bad-attr', attr: 'skill', value: 'x' },
+    });
     const head =
-      '<!-- factory:evidence contract=1 -->\n| Critère | Preuve | État |\n|---|---|---|\n';
+      '<!-- factory:evidence contract=1 skill=implementation@0.1.0 -->\n| Critère | Preuve | État |\n|---|---|---|\n';
     expect(parseEvidence(`${head}| C1 | mal formée`)).toEqual({
       ok: false,
       error: { kind: 'bad-row', line: '| C1 | mal formée' },
