@@ -15,6 +15,8 @@ export class RunState {
   /** Repli : une carte bloquante a été publiée par le handler (pas de `defer`) ; le run doit s'arrêter. */
   stopOnCard: string | undefined;
   sessionId: string | undefined;
+  /** Reprise : l'appel différé n'a pas pu être rejoué, la réponse est passée par le prompt. */
+  deferredUnavailable = false;
 
   constructor(public readonly runId: string) {}
 

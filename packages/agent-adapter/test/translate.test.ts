@@ -157,9 +157,22 @@ describe('translate — result', () => {
     const { events } = run([result({ subtype: 'error_during_execution', is_error: true })]);
     expect(events[0]).toMatchObject({ detail: 'error_during_execution' });
   });
-  it('session non reprenable → execution', () => {
-    const { events } = run([result({ terminal_reason: 'tool_deferred_unavailable' })]);
-    expect(events[0]).toMatchObject({ type: 'run.failed', reason: 'execution' });
+  it('outil différé indisponible à la reprise : rien émis, état marqué, pas de carte', () => {
+    const deferred = { id: 'x', name: 'mcp__factory__emit_card', input: {} };
+    const msg = result({
+      terminal_reason: 'tool_deferred_unavailable',
+      is_error: true,
+      deferred_tool_use: deferred,
+    });
+    const { events, state } = run([msg]);
+    expect(events).toEqual([]);
+    expect(state.deferredUnavailable).toBe(true);
+    expect(deferredCard(msg)).toBeUndefined();
+    expect(
+      deferredCard(
+        result({ stop_reason: 'tool_deferred_unavailable', deferred_tool_use: deferred }),
+      ),
+    ).toBeUndefined();
   });
   it('succès → run.finished', () => {
     const { events } = run([result({ num_turns: 7, total_cost_usd: 0.42 })]);

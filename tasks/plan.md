@@ -54,16 +54,16 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 - [x] CI verte ; A4 faite (issue #1) ; `conventions:check` relit l'issue manuscrite sans erreur ; couverture 100 % branches `parse*`/`serialize*`
 
 ### Phase 2 — `skills` ∥ `agent-adapter`
-- [ ] T7 Chargeur de skills : front matter, changelog, attribution, `inject`
-- [ ] T8 `skills/framing/SKILL.md` adaptée
-- [ ] T9 `skills/implementation/SKILL.md` adaptée
-- [ ] T10 `FactoryEvent`, `RunSpec`, adaptateur `fake` + scénario
-- [ ] T11 Adaptateur Claude : `buildOptions`, serveur MCP `factory`, `policy`
-- [ ] T12 Hooks `defer`/`allow`/`deny` et `translate` sur fixtures
-- [ ] T13 Test live : carte → `run.waiting` → reprise → `run.finished` ; fixtures `SDKMessage` enregistrées
+- [x] T7 Chargeur de skills : front matter, changelog, attribution, `inject`
+- [x] T8 `skills/framing/SKILL.md` adaptée
+- [x] T9 `skills/implementation/SKILL.md` adaptée
+- [x] T10 `FactoryEvent`, `RunSpec`, adaptateur `fake` + scénario
+- [x] T11 Adaptateur Claude : `buildOptions`, serveur MCP `factory`, `policy`
+- [x] T12 Hooks `defer`/`allow`/`deny` et `translate` sur fixtures
+- [x] T13 Test live : carte → `run.waiting` → reprise → `run.finished` ; fixtures `SDKMessage` enregistrées
 
 ### Point de contrôle 2
-- [ ] T13 passé une fois à la main avec la skill `framing` réelle sur une issue de ce dépôt ; CI verte ; `grep claude-agent-sdk` ne sort que `src/claude/`
+- [ ] T13 passé une fois à la main avec la skill `framing` réelle sur une issue de ce dépôt (reste à faire : nécessite l'orchestrateur, phase 3) ; [x] test live minimal vert le 13 octobre 2026 ; [x] `grep claude-agent-sdk packages/*/src` ne sort que `src/claude/` ; CI verte à vérifier après push
 
 ### Phase 3 — `orchestrator`
 - [ ] T14 `auth.ts` (gh) et lecture GitHub avec ETag (msw)

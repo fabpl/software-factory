@@ -127,7 +127,11 @@ export class ClaudeCodeAdapter implements AgentAdapter {
         runId: spec.runId,
         ...(state.sessionId !== undefined ? { sessionId: state.sessionId } : {}),
         reason: cancelled ? 'cancelled' : 'execution',
-        detail: cancelled ? 'annulé' : 'flux terminé sans résultat',
+        detail: cancelled
+          ? 'annulé'
+          : state.deferredUnavailable
+            ? 'reprise impossible : outil différé indisponible et flux terminé sans résultat'
+            : 'flux terminé sans résultat',
       };
     }
   }

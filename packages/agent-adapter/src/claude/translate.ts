@@ -86,10 +86,16 @@ export function summarize(name: string, input: unknown): string {
   return truncate(text);
 }
 
+export const DEFERRED_UNAVAILABLE = 'tool_deferred_unavailable';
+
+export function isDeferredUnavailable(msg: SdkResultMessage): boolean {
+  return msg.terminal_reason === DEFERRED_UNAVAILABLE || msg.stop_reason === DEFERRED_UNAVAILABLE;
+}
+
 /** Carte différée par le hook `defer`, validée par `conventions`. */
 export function deferredCard(msg: SdkResultMessage): Result<CardInput, string> | undefined {
   const deferred = msg.deferred_tool_use;
-  if (!deferred) return undefined;
+  if (!deferred || isDeferredUnavailable(msg)) return undefined;
   if (deferred.name !== factoryToolId('emit_card')) {
     return { ok: false, error: `outil différé inattendu : ${deferred.name}` };
   }
@@ -195,16 +201,12 @@ export function translate(
           },
         ];
       }
-      if (result.terminal_reason === 'tool_deferred_unavailable') {
-        return [
-          {
-            type: 'run.failed',
-            runId,
-            sessionId: result.session_id,
-            reason: 'execution',
-            detail: 'reprise impossible : session non reprenable (tool_deferred_unavailable)',
-          },
-        ];
+      if (isDeferredUnavailable(result)) {
+        // Reprise : le SDK vérifie l'outil différé avant de connecter le serveur `factory` (en process),
+        // le déclare indisponible, puis poursuit la session avec le prompt, qui porte la réponse.
+        // Observé en live le 13 octobre 2026 : un second `result` suit. Rien à émettre ici.
+        state.deferredUnavailable = true;
+        return [];
       }
       return [
         {

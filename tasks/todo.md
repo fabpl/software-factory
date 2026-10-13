@@ -87,7 +87,8 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Dépendances : T12, A3. Taille : S. Fichiers : `test/live/roundtrip.test.ts`, fixtures.
 
 ### Point de contrôle 2
-- [ ] T13 passé une fois avec la vraie skill `framing` ; CI verte ; isolation SDK vérifiée par grep. Revue humaine.
+- [x] Test live minimal vert (13 octobre 2026), fixtures réelles enregistrées, isolation SDK vérifiée par grep.
+- [ ] T13 avec la vraie skill `framing` sur une issue de ce dépôt : nécessite l'orchestrateur (T20c), reporté au point de contrôle 3. Revue humaine des deux `SKILL.md`.
 
 ## Phase 3 — `orchestrator` (`packages/orchestrator`)
 

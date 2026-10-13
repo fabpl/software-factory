@@ -13,4 +13,15 @@ pnpm --filter @factory/agent-adapter test:live   # un vrai run court, hors CI (C
 
 ## Test live
 
-Résultat du dernier passage : _pas encore exécuté_.
+Dernier passage : **13 octobre 2026, vert** (SDK `0.3.296`, modèle `claude-opus-5-5`, deux tests, 17 s).
+
+- `run.started → agent.tool (read_rules) → card.emitted (blocking) → run.waiting`, puis à la reprise `run.started → agent.message → agent.tool (Bash, refusé) → agent.message → run.finished`, même `session_id`, la carte répondue n'est pas republiée.
+- `git push origin main` refusé par le hook (`PreToolUse:Bash hook error`), le run continue.
+- Un outil requis manquant échoue en moins de dix secondes avec `tools_missing`.
+- Flux brut enregistré dans `test/fixtures/sdk/live-roundtrip.json` ; le test `translate` le rejoue en CI.
+
+Observations qui ont fait évoluer l'implémentation par rapport à la spec :
+
+1. **`tool_deferred_unavailable` à la reprise.** Le SDK vérifie l'outil différé _avant_ de connecter le serveur MCP `factory` (fourni en process), le déclare indisponible, puis poursuit la même session avec le prompt. Le hook n'est donc jamais rejoué pour un outil en process. L'adaptateur passe la réponse humaine dans le prompt à chaque reprise, ignore ce premier `result` et attend le second ; si le flux se termine sans second `result`, `run.failed` (`execution`).
+2. **Outils MCP chargés à la demande.** Le modèle appelle `ToolSearch` avant le premier outil `factory` ; `init.tools` les liste bien. Événement `agent.tool` ordinaire.
+3. **Messages ignorés rencontrés** : `rate_limit_event`, `command_lifecycle`, `system/thinking_tokens`.

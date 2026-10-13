@@ -190,6 +190,11 @@ export async function* start(spec: RunSpec): AsyncIterable<FactoryEvent> {
 4. Un run avec un outil requis manquant échoue en moins de dix secondes avec `tools_missing`.
 5. Un `Bash` contenant `git push` est refusé et le run continue.
 
+## Amendements
+
+- 2026-10-13 (T13, test live) : à la reprise d'un outil `factory` différé, le SDK émet `tool_deferred_unavailable` avant de connecter le serveur en process, puis poursuit la même session avec le prompt. L'adaptateur ne rejoue donc jamais l'outil : la réponse est toujours passée dans `prompt` (le hook reste armé si une version du SDK rejoue l'appel), ce premier `result` est ignoré, le second termine le run. `run.failed` (`execution`) seulement si le flux s'arrête sans second `result`. Voir `packages/agent-adapter/README.md`.
+- 2026-10-13 : `RunSpec.maxBudgetUsd` ajouté (question tranchée 1) ; `FactoryToolName`, `ContractInput`, `EvidenceInput`, `AdrRequest` vivent dans `conventions` (`src/tools.ts`), partagés avec `skills`.
+
 ## Questions tranchées à l'approbation
 
 1. `maxTurns` 200 par défaut, plus `maxBudgetUsd` réglable. À mesurer sur les trois premières issues.
