@@ -15,8 +15,5 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --coverage"
-  },
-  "dependencies": {
-    "zod": "4.6.7"
   }
 }

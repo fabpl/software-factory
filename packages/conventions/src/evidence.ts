@@ -20,6 +20,8 @@ export interface EvidenceLine {
 export interface Evidence {
   /** Version du contrat à laquelle les lignes se rapportent. */
   contract: number;
+  /** `implementation@0.1.0` : skill qui a produit le commentaire (traçabilité §8). */
+  skill: string;
   lines: EvidenceLine[];
 }
 
@@ -48,6 +50,10 @@ export function parseEvidence(comment: string): Result<Evidence, EvidenceError> 
   if (!Number.isInteger(contract) || contract < 1) {
     return err({ kind: 'bad-attr', attr: 'contract', value: marker.attrs.contract ?? '' });
   }
+  const skill = marker.attrs.skill;
+  if (skill === undefined || !/^[a-z-]+@\d+\.\d+\.\d+$/.test(skill)) {
+    return err({ kind: 'bad-attr', attr: 'skill', value: skill ?? '' });
+  }
   const lines: EvidenceLine[] = [];
   const seen = new Set<string>();
   for (const line of comment.split('\n').slice(1)) {
@@ -64,7 +70,7 @@ export function parseEvidence(comment: string): Result<Evidence, EvidenceError> 
     if (note !== undefined) entry.note = note;
     lines.push(entry);
   }
-  return ok({ contract, lines });
+  return ok({ contract, skill, lines });
 }
 
 export function serializeEvidence(evidence: Evidence): string {
@@ -73,7 +79,7 @@ export function serializeEvidence(evidence: Evidence): string {
     return `| ${l.criterion} | ${l.proof} | \`${l.state}\`${note} |`;
   });
   return [
-    renderMarker(EVIDENCE_MARKER, { contract: String(evidence.contract) }),
+    renderMarker(EVIDENCE_MARKER, { contract: String(evidence.contract), skill: evidence.skill }),
     '## Preuves',
     '',
     '| Critère | Preuve | État |',

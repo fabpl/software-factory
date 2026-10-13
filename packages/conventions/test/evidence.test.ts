@@ -33,6 +33,7 @@ describe('parseEvidence', () => {
   it('lit la fixture de la spec', () => {
     const e = evidence();
     expect(e.contract).toBe(3);
+    expect(e.skill).toBe('implementation@0.1.0');
     expect(e.lines.map((l) => [l.criterion, l.state])).toEqual([
       ['C1', 'proven'],
       ['C2', 'pending'],
@@ -78,6 +79,7 @@ describe('autorité sur proven', () => {
     });
     const agentOnly: Evidence = {
       contract: 1,
+      skill: 'implementation@0.1.0',
       lines: evidence().lines.filter((l) => l.state !== 'proven'),
     };
     expect(validateAgentEvidence(agentOnly)).toEqual({ ok: true, value: true });
@@ -87,6 +89,7 @@ describe('autorité sur proven', () => {
     expect(validateProven(evidence())).toEqual({ ok: true, value: true });
     const bad: Evidence = {
       contract: 1,
+      skill: 'implementation@0.1.0',
       lines: [{ criterion: 'C1', proof: 'je le jure', state: 'proven' }],
     };
     expect(validateProven(bad)).toEqual({
@@ -99,7 +102,11 @@ describe('autorité sur proven', () => {
 describe('état par critère', () => {
   it('calcule missing pour les critères validés sans ligne', () => {
     const c = contract(); // C1, C2 validés
-    const e: Evidence = { contract: 3, lines: [{ criterion: 'C1', proof: 'x', state: 'pending' }] };
+    const e: Evidence = {
+      contract: 3,
+      skill: 'implementation@0.1.0',
+      lines: [{ criterion: 'C1', proof: 'x', state: 'pending' }],
+    };
     expect([...evidenceByCriterion(c, e)]).toEqual([
       ['C1', 'pending'],
       ['C2', 'missing'],
@@ -115,13 +122,19 @@ describe('état par critère', () => {
       proof: '[run](https://github.com/o/r/actions/runs/1)',
       state: 'proven' as const,
     });
-    const allProven: Evidence = { contract: 3, lines: [proven('C1'), proven('C2')] };
+    const allProven: Evidence = {
+      contract: 3,
+      skill: 'implementation@0.1.0',
+      lines: [proven('C1'), proven('C2')],
+    };
     const oneReview: Evidence = {
       contract: 3,
+      skill: 'implementation@0.1.0',
       lines: [proven('C1'), { criterion: 'C2', proof: 'x', state: 'to-review' }],
     };
     const onePending: Evidence = {
       contract: 3,
+      skill: 'implementation@0.1.0',
       lines: [proven('C1'), { criterion: 'C2', proof: 'x', state: 'pending' }],
     };
     expect(canReachEvidencePhase(c, allProven)).toBe(true);

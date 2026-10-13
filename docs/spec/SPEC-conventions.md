@@ -135,7 +135,7 @@ B. Et note-le dans l'ADR.
 Un seul commentaire, réécrit par l'agent à chaque mise à jour, identifié par `<!-- factory:evidence -->`.
 
 ```markdown
-<!-- factory:evidence contract=3 -->
+<!-- factory:evidence contract=3 skill=implementation@0.1.0 -->
 ## Preuves
 
 | Critère | Preuve | État |
@@ -239,6 +239,8 @@ export function parseContract(body: string): Result<Contract, ContractError> {
 
 - 2026-10-13 : §7 bloc de run ajouté (spec `agent-adapter`, hypothèse 5).
 - 2026-10-13 : §5 état `pending` et autorité sur `proven` (carte « Qui a le droit d'écrire proven », option A).
+- 2026-10-13 (point de contrôle 1) : §5 le marqueur de preuves porte `skill=` comme les autres blocs (§8 l'exigeait, l'exemple l'omettait).
+- 2026-10-13 (point de contrôle 1) : §3 décocher à la main une case `validated` ramène l'item à `pending` (symétrique de « cocher vaut validation ») ; l'item réapparaît dans la file Valider.
 
 ## Critères de succès
 

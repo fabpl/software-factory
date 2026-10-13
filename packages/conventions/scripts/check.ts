@@ -28,7 +28,7 @@ interface GhComment {
 }
 
 async function gh<T>(path: string): Promise<T> {
-  const { stdout } = await run('gh', ['api', path, '--paginate']);
+  const { stdout } = await run('gh', ['api', path]);
   return JSON.parse(stdout) as T;
 }
 
@@ -60,11 +60,12 @@ async function main(): Promise<void> {
   console.log(`# ${repo}#${String(issue.number)} — ${issue.title}\n`);
 
   show('étiquettes', parseLabels(issue.labels.map((l) => l.name)));
-  show('contrat', parseContract(issue.body ?? ''));
+  const contract = parseContract(issue.body ?? '');
+  show('contrat', contract);
+  let failures = contract.ok ? 0 : 1;
 
-  const comments = await gh<GhComment[]>(`repos/${repo}/issues/${issueArg}/comments`);
+  const comments = await gh<GhComment[]>(`repos/${repo}/issues/${issueArg}/comments?per_page=100`);
   console.log(`\n${String(comments.length)} commentaire(s)`);
-  let failures = 0;
   for (const c of comments) {
     const marker = parseMarker(c.body);
     const label = `commentaire ${String(c.id)} (${marker?.name ?? 'sans marqueur'})`;

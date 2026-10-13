@@ -39,11 +39,7 @@ importers:
         specifier: 5.0.4
         version: 5.0.4(@types/node@22.19.0)(@vitest/coverage-v8@5.0.4)(vite@8.3.4(@types/node@22.19.0)(esbuild@0.28.2)(tsx@4.23.15))
 
-  packages/conventions:
-    dependencies:
-      zod:
-        specifier: 4.6.7
-        version: 4.6.7
+  packages/conventions: {}
 
 packages:
 
@@ -1056,9 +1052,6 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zod@4.6.7:
-    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
-
 snapshots:
 
   '@babel/helper-string-parser@7.29.7': {}
@@ -1885,5 +1878,3 @@ snapshots:
   word-wrap@1.2.5: {}
 
   yocto-queue@0.1.0: {}
-
-  zod@4.6.7: {}
