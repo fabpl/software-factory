@@ -38,6 +38,8 @@ export interface RunRequest {
   sessionId?: string;
   /** Réponse humaine passée à `resume` ; absente = `start`. */
   answer?: CardAnswer;
+  /** Reprise sur CI rouge : comptée pour le plafond `MAX_CI_RETRIES`. */
+  ciRetry?: true;
 }
 
 export type Action =
@@ -144,8 +146,12 @@ function consumeAnswer(state: TaskState, c: TaskCard, answer: CardAnswer): Actio
   }
   // action
   if (c.card.title === CARD_TITLES.runInterrupted) {
-    const prompt = PROMPTS.resumeAfterInterruption;
-    const run: RunRequest = { skill, prompt, answer };
+    // Le run attendait une carte encore ouverte : c'est la réponse à cette carte qui relancera.
+    const waitingOn = state.run?.status === 'waiting' ? state.run.card : undefined;
+    if (waitingOn !== undefined && openCards(state).some((o) => o.card.id === waitingOn)) {
+      return { ...base, newStatus, addBlockingRule: false };
+    }
+    const run: RunRequest = { skill, prompt: PROMPTS.resumeAfterInterruption, answer };
     if (state.run !== undefined) run.sessionId = state.run.session;
     return { ...base, newStatus, addBlockingRule: false, run };
   }

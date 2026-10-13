@@ -27,7 +27,7 @@ import {
   type Need,
   type Queue,
 } from '@factory/conventions';
-import { findMarked, findPull, upsertMarked, type GitHubPort, type PullData } from './github.js';
+import { findMarked, findPull, upsertMarked, type GitHubPort } from './github.js';
 import { appendRule, readRules } from './rules.js';
 import { nextCardId } from './state.js';
 import type { Worktree, WorktreePort } from './worktree.js';
@@ -49,12 +49,16 @@ export interface HandlerContext {
   defaultBranch: string;
   clock: () => Date;
   /** PR connue au lancement du run, si elle existe déjà. */
-  pull?: PullData;
+  pull?: PullRef;
+}
+
+export interface PullRef {
+  number: number;
 }
 
 export interface Handlers extends FactoryToolHandlers {
   /** PR brouillon créée ou retrouvée pendant le run. */
-  pull(): PullData | undefined;
+  pull(): PullRef | undefined;
 }
 
 const NEED_FOR_QUEUE: Record<Queue, Need> = {
@@ -130,7 +134,7 @@ export function createHandlers(ctx: HandlerContext): Handlers {
   let pull = ctx.pull;
   const { github, issue } = ctx;
 
-  async function ensurePull(commitMessage: string): Promise<PullData> {
+  async function ensurePull(commitMessage: string): Promise<PullRef> {
     if (pull) return pull;
     const found = findPull(await github.listPulls(), issue);
     if (found?.state === 'open') {

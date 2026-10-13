@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { simpleGit, type SimpleGit } from 'simple-git';
 import type { RepoRef } from './github.js';
@@ -22,6 +22,8 @@ export interface WorktreePort {
   create(issue: number, branch: string, base: string): Promise<Worktree>;
   open(issue: number): Promise<Worktree | undefined>;
   has(issue: number): boolean;
+  /** Issues ayant un worktree sur le disque. */
+  list(): number[];
   /** Supprime le worktree et sa branche locale. La branche distante n'est jamais touchée. */
   remove(issue: number): Promise<void>;
   /** `git add -A` + commit ; `undefined` si rien à committer (sauf `allowEmpty`). */
@@ -127,6 +129,14 @@ export function createWorktrees(options: WorktreeOptions): WorktreePort {
     create,
     open,
     has: (issue) => existsSync(worktreePath(issue)),
+    list: () => {
+      const dir = join(options.root, 'worktrees', slug);
+      if (!existsSync(dir)) return [];
+      return readdirSync(dir)
+        .map(Number)
+        .filter((n) => Number.isInteger(n) && n > 0)
+        .sort((a, b) => a - b);
+    },
     remove,
     commitAll,
     push,

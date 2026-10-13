@@ -214,6 +214,27 @@ describe('reconcile — réponses aux cartes', () => {
     ]);
   });
 
+  it('Run interrompu faite alors que le bloc attend une carte encore ouverte → statut done, pas de run', () => {
+    const interrupted = card(
+      { ...ACTION, title: CARD_TITLES.runInterrupted },
+      { id: 'card-2', answer: simple('card-2', 'done') },
+    );
+    const state = task({
+      cards: [card(QUESTION), interrupted],
+      run: runBlock({ status: 'waiting', card: 'card-1' }),
+      lock: { active: false, failed: true },
+    });
+    expect(reconcile(state, local(), REPO)).toEqual([
+      {
+        type: 'consume-answer',
+        issue: 7,
+        cardId: 'card-2',
+        newStatus: 'done',
+        addBlockingRule: false,
+      },
+    ]);
+  });
+
   it('Run interrompu faite → reprise de la session du bloc, ou run neuf', () => {
     const answered = card(
       { ...ACTION, title: CARD_TITLES.runInterrupted },

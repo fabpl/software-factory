@@ -20,6 +20,7 @@ describe('worktree', () => {
 
   it('clone, worktree sur une branche neuve, commit, push, jamais --force', async () => {
     expect(wt.has(7)).toBe(false);
+    expect(wt.list()).toEqual([]);
     expect(await wt.open(7)).toBeUndefined();
     const w = await wt.create(7, 'factory/7-un-titre', 'main');
     expect(w).toEqual({
@@ -28,6 +29,7 @@ describe('worktree', () => {
       branch: 'factory/7-un-titre',
     });
     expect(wt.has(7)).toBe(true);
+    expect(wt.list()).toEqual([7]);
     expect(await wt.commitAll(w.path, 'rien')).toBeUndefined();
     writeFileSync(join(w.path, 'a.txt'), 'a\n');
     const sha = await wt.commitAll(w.path, 'feat(#7): a');

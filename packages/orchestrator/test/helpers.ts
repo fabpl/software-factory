@@ -171,6 +171,7 @@ export function task(overrides: Partial<TaskState> = {}): TaskState {
     closed: false,
     phase: 'framing',
     needs: needsFor(overrides.cards ?? []),
+    otherLabels: [],
     contractDirty: false,
     cards: [],
     ...overrides,

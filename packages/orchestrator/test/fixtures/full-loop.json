@@ -1,0 +1,225 @@
+{
+  "framing": {
+    "start": [
+      { "tool": "read_rules" },
+      {
+        "tool": "update_contract",
+        "input": {
+          "items": [
+            {
+              "id": "H1",
+              "kind": "hypothesis",
+              "text": "L'app lit les étiquettes sans GitHub Projects.",
+              "status": "pending"
+            },
+            {
+              "id": "C1",
+              "kind": "criterion",
+              "text": "Les étiquettes sont relues sans erreur.",
+              "status": "pending",
+              "plannedProof": "test `labels.parse` vert en CI"
+            }
+          ]
+        }
+      },
+      { "event": { "type": "agent.message", "text": "Confiance : 40 %." } },
+      {
+        "tool": "emit_card",
+        "input": {
+          "kind": "question",
+          "title": "Où stocker l'état ?",
+          "context": "Confiance : 40 % — manque : le lieu de l'état.",
+          "options": [
+            { "letter": "A", "text": "Base locale", "consequence": "Contredit le principe 1." },
+            { "letter": "B", "text": "GitHub seulement", "consequence": "Tout est relisible." }
+          ],
+          "recommendation": { "letter": "B", "text": "Cohérent avec l'intention." },
+          "reversibility": "reversible"
+        }
+      }
+    ],
+    "resume": [
+      [
+        {
+          "tool": "update_contract",
+          "input": {
+            "items": [
+              {
+                "id": "H1",
+                "kind": "hypothesis",
+                "text": "L'app lit les étiquettes sans GitHub Projects.",
+                "status": "validated",
+                "note": "carte #1"
+              },
+              {
+                "id": "D1",
+                "kind": "decision",
+                "text": "L'état vit dans GitHub seulement.",
+                "status": "pending",
+                "note": "carte #1"
+              },
+              {
+                "id": "C1",
+                "kind": "criterion",
+                "text": "Les étiquettes sont relues sans erreur.",
+                "status": "pending",
+                "plannedProof": "test `labels.parse` vert en CI"
+              }
+            ]
+          }
+        },
+        {
+          "tool": "emit_card",
+          "input": {
+            "kind": "question",
+            "title": "Faut-il une capture d'écran ?",
+            "context": "Confiance : 80 % — manque : la preuve visuelle.",
+            "options": [
+              { "letter": "A", "text": "Oui", "consequence": "Une capture commitée." },
+              { "letter": "B", "text": "Non", "consequence": "Tests seulement." }
+            ],
+            "recommendation": { "letter": "A", "text": "L'humain veut voir." },
+            "reversibility": "reversible"
+          }
+        }
+      ],
+      [
+        {
+          "tool": "update_contract",
+          "input": {
+            "items": [
+              {
+                "id": "H1",
+                "kind": "hypothesis",
+                "text": "L'app lit les étiquettes sans GitHub Projects.",
+                "status": "validated",
+                "note": "carte #1"
+              },
+              {
+                "id": "H2",
+                "kind": "hypothesis",
+                "text": "Hors périmètre : GitHub Projects, webhooks.",
+                "status": "pending"
+              },
+              {
+                "id": "D1",
+                "kind": "decision",
+                "text": "L'état vit dans GitHub seulement.",
+                "status": "pending",
+                "note": "carte #1"
+              },
+              {
+                "id": "C1",
+                "kind": "criterion",
+                "text": "Les étiquettes sont relues sans erreur.",
+                "status": "pending",
+                "plannedProof": "test `labels.parse` vert en CI"
+              },
+              {
+                "id": "C2",
+                "kind": "criterion",
+                "text": "Une capture de l'inbox est commitée.",
+                "status": "pending",
+                "note": "carte #3",
+                "plannedProof": "fichier `docs/evidence/1.png` commité"
+              }
+            ]
+          }
+        },
+        {
+          "event": {
+            "type": "agent.message",
+            "text": "Je peux prédire les trois prochaines réponses : j'arrête."
+          }
+        }
+      ]
+    ]
+  },
+  "implementation": {
+    "start": [
+      { "tool": "read_rules" },
+      {
+        "tool": "emit_card",
+        "input": {
+          "kind": "decision",
+          "title": "Nom du module",
+          "context": "Hors contrat, réversible : j'applique A.",
+          "options": [
+            { "letter": "A", "text": "labels", "consequence": "court" },
+            { "letter": "B", "text": "label-reader", "consequence": "explicite" }
+          ],
+          "recommendation": { "letter": "A", "text": "Plus court." },
+          "reversibility": "reversible"
+        }
+      },
+      {
+        "tool": "update_evidence",
+        "input": {
+          "lines": [
+            { "criterion": "C1", "proof": "`labels.parse`", "state": "pending" },
+            { "criterion": "C2", "proof": "`docs/evidence/1.png`", "state": "to-review" }
+          ]
+        }
+      },
+      {
+        "tool": "emit_card",
+        "input": {
+          "kind": "arbitration",
+          "title": "Nouvelle dépendance de production",
+          "context": "Bloquant : le parseur YAML.",
+          "options": [
+            { "letter": "A", "text": "Ajouter `yaml`", "consequence": "+1 dépendance" },
+            { "letter": "B", "text": "Parseur maison", "consequence": "40 lignes à écrire" }
+          ],
+          "recommendation": { "letter": "B", "text": "Le format est trivial." },
+          "changeCost": "Faible.",
+          "reversibility": "irreversible"
+        }
+      }
+    ],
+    "resume": [
+      [
+        {
+          "tool": "request_adr",
+          "input": {
+            "cardId": "card-5",
+            "slug": "parseur-maison",
+            "title": "Parseur maison plutôt que yaml",
+            "origin": "implémentation (carte card-5, issue #1)",
+            "reversibility": "irréversible",
+            "question": "Ajouter la dépendance yaml ?",
+            "context": "Le front matter est trivial.",
+            "options": [
+              { "letter": "A", "label": "yaml", "pros": "robuste", "cons": "dépendance" },
+              { "letter": "B", "label": "maison", "pros": "zéro dépendance", "cons": "à écrire" }
+            ],
+            "chosen": "B",
+            "decision": "Parseur maison.",
+            "consequences": ["40 lignes de plus."]
+          }
+        },
+        {
+          "tool": "update_evidence",
+          "input": {
+            "lines": [
+              { "criterion": "C1", "proof": "`labels.parse`", "state": "pending" },
+              { "criterion": "C2", "proof": "`docs/evidence/1.png`", "state": "to-review" }
+            ]
+          }
+        }
+      ],
+      [
+        { "event": { "type": "agent.message", "text": "Décision annulée : module renommé." } },
+        {
+          "tool": "update_evidence",
+          "input": {
+            "lines": [
+              { "criterion": "C1", "proof": "`labels.parse`", "state": "pending" },
+              { "criterion": "C2", "proof": "`docs/evidence/1.png`", "state": "to-review" }
+            ]
+          }
+        }
+      ]
+    ]
+  }
+}

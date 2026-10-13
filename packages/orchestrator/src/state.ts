@@ -68,6 +68,8 @@ export interface TaskState {
   closed: boolean;
   phase: Phase;
   needs: ReadonlySet<Need>;
+  /** Étiquettes qui ne sont pas à nous, conservées à chaque réécriture. */
+  otherLabels: readonly string[];
   lock?: { active: boolean; failed: boolean; assignee?: string };
   contract?: Contract;
   /** Le bloc contrat du corps diffère de sa forme canonique (case cochée à la main…). */
@@ -175,6 +177,7 @@ export function buildTaskState(
     closed: issue.state === 'closed',
     phase,
     needs: labels.value.needs,
+    otherLabels: labels.value.others,
     contractDirty,
     cards,
   };
