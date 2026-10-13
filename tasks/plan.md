@@ -39,7 +39,7 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 ## Liste des tâches
 
 ### Phase 0 — Fondations
-- [ ] T0 Racine du monorepo (pnpm, tsconfig, eslint + prettier, vitest, CI, NOTICE, README minimal)
+- [x] T0 Racine du monorepo (pnpm, tsconfig, eslint + prettier, vitest, CI, NOTICE, README minimal)
 - [ ] A1 Dépôt GitHub créé, CI verte sur un commit vide de tests
 
 ### Phase 1 — `conventions`
