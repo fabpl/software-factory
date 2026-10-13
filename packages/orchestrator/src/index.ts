@@ -8,3 +8,4 @@ export * from './log.js';
 export * from './auth.js';
 export * from './octokit.js';
 export * from './orchestrator.js';
+export * from './bootstrap.js';

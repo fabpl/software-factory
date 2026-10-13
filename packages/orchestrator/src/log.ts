@@ -8,7 +8,7 @@ import { join } from 'node:path';
 
 export interface Log {
   readonly dir: string;
-  write(issue: number | 'repo', record: Record<string, unknown>): void;
+  write(key: number | string, record: Record<string, unknown>): void;
   /** Supprime les fichiers plus vieux que `maxAgeDays` (date de dernière écriture). */
   purge(): number;
 }
@@ -23,10 +23,10 @@ export function createLog(dir: string, options: LogOptions = {}): Log {
   const maxAgeMs = (options.maxAgeDays ?? 30) * 24 * 60 * 60 * 1000;
   return {
     dir,
-    write(issue, record) {
+    write(key, record) {
       mkdirSync(dir, { recursive: true });
       const line = JSON.stringify({ at: now().toISOString(), ...record });
-      appendFileSync(join(dir, `${String(issue)}.jsonl`), line + '\n');
+      appendFileSync(join(dir, `${String(key)}.jsonl`), line + '\n');
     },
     purge() {
       if (!existsSync(dir)) return 0;

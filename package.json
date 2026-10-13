@@ -16,7 +16,8 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "check": "pnpm lint && pnpm format && pnpm typecheck && pnpm test",
-    "conventions:check": "tsx packages/conventions/scripts/check.ts"
+    "conventions:check": "tsx packages/conventions/scripts/check.ts",
+    "factory": "tsx packages/orchestrator/src/cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

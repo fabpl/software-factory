@@ -287,6 +287,20 @@ export class Orchestrator {
     return this.tick();
   }
 
+  /** Lecture seule : relit GitHub et publie l'état sans exécuter aucune action (`factory state`). */
+  async observe(): Promise<InboxState> {
+    if (this.blocked) return this.state;
+    if (this.ticking) await this.ticking;
+    const errors: string[] = [];
+    try {
+      await this.read(errors);
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
+    this.publish(errors);
+    return this.state;
+  }
+
   // -- tick ---------------------------------------------------------------------
 
   /** Un tick à la fois ; un tick demandé pendant un tick en relance un juste après. */
@@ -307,46 +321,11 @@ export class Orchestrator {
   }
 
   private async runTick(): Promise<void> {
-    const { github, worktrees, log } = this.options;
+    const { worktrees, log } = this.options;
     const errors: string[] = [];
     try {
-      if (!this.labelsEnsured) {
-        await github.ensureLabels(LABEL_DEFINITIONS);
-        this.labelsEnsured = true;
-      }
-      if (this.me === '') this.me = await github.whoami();
-      const repo = { hasWorkflows: await github.hasWorkflows() };
-      const pulls = await github.listPulls();
-      const issues = await github.listManagedIssues();
-      const known = new Set(issues.map((i) => i.number));
-      for (const n of worktrees.list()) {
-        if (known.has(n)) continue;
-        const closed = await github.getIssue(n);
-        if (closed) issues.push(closed);
-      }
-
-      const tasks: TaskState[] = [];
-      for (const issue of issues) {
-        const pull = findPull(pulls, issue.number);
-        const built = buildTaskState({
-          issue,
-          comments: await github.listComments(issue.number),
-          ...(pull
-            ? {
-                pull: {
-                  data: pull,
-                  comments: await github.listComments(pull.number),
-                  ci: await github.latestCiRun(pull.headSha),
-                },
-              }
-            : {}),
-        });
-        if (built.ok) tasks.push(built.value);
-        else errors.push(`#${String(built.error.issue)} ignorée : ${built.error.kind}`);
-      }
-      this.tasks = tasks;
-
-      for (const task of tasks) {
+      const { pulls, repo } = await this.read(errors);
+      for (const task of this.tasks) {
         const local = {
           runs: new Set(this.live ? [this.live.issue] : []),
           worktrees: new Set(worktrees.list()),
@@ -362,6 +341,48 @@ export class Orchestrator {
       log.write('repo', { kind: 'tick-error', error: String(error) });
     }
     this.publish(errors);
+  }
+
+  /** Moitié lecture du tick : étiquettes, identité, issues, PR, CI → `this.tasks`. */
+  private async read(
+    errors: string[],
+  ): Promise<{ pulls: PullData[]; repo: { hasWorkflows: boolean } }> {
+    const { github, worktrees } = this.options;
+    if (!this.labelsEnsured) {
+      await github.ensureLabels(LABEL_DEFINITIONS);
+      this.labelsEnsured = true;
+    }
+    if (this.me === '') this.me = await github.whoami();
+    const repo = { hasWorkflows: await github.hasWorkflows() };
+    const pulls = await github.listPulls();
+    const issues = await github.listManagedIssues();
+    const known = new Set(issues.map((i) => i.number));
+    for (const n of worktrees.list()) {
+      if (known.has(n)) continue;
+      const closed = await github.getIssue(n);
+      if (closed) issues.push(closed);
+    }
+    const tasks: TaskState[] = [];
+    for (const issue of issues) {
+      const pull = findPull(pulls, issue.number);
+      const built = buildTaskState({
+        issue,
+        comments: await github.listComments(issue.number),
+        ...(pull
+          ? {
+              pull: {
+                data: pull,
+                comments: await github.listComments(pull.number),
+                ci: await github.latestCiRun(pull.headSha),
+              },
+            }
+          : {}),
+      });
+      if (built.ok) tasks.push(built.value);
+      else errors.push(`#${String(built.error.issue)} ignorée : ${built.error.kind}`);
+    }
+    this.tasks = tasks;
+    return { pulls, repo };
   }
 
   private publish(errors: string[] = this.state.errors): void {

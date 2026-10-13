@@ -656,3 +656,46 @@ describe('orchestrator', () => {
     await worktrees.remove(issue);
   });
 });
+
+describe('orchestrator — observe (lecture seule)', () => {
+  it('relit GitHub sans exécuter d’action, même pendant un tick ; bloqué → état figé ; panne → erreur', async () => {
+    const repo = await tempRepo();
+    const worktrees = createWorktrees({
+      root: repo.userData,
+      ref: { owner: 'acme', repo: 'widget' },
+      cloneUrl: repo.remote,
+      identity: IDENTITY,
+    });
+    const github = new FakeGitHub();
+    github.addIssue({ number: 1, title: 'Lecture', labels: ['phase:framing'] });
+    const options: OrchestratorOptions = {
+      github,
+      adapter: adapterOf((s) =>
+        events(s, [{ type: 'run.finished', sessionId: 'x', turns: 1, costUsd: 0 }]),
+      ),
+      worktrees,
+      log: createLog(join(repo.userData, 'logs')),
+    };
+    const o = new Orchestrator(options);
+    const observed = await o.observe();
+    expect(observed.tasks).toMatchObject([{ issue: 1, phase: 'framing' }]);
+    expect(github.writes).toEqual([]);
+    expect(github.issues.get(1)?.labels).toEqual(['phase:framing']);
+
+    const ticking = o.tick();
+    const during = await o.observe();
+    await ticking;
+    await o.waitForRun();
+    expect(during.tasks).toHaveLength(1);
+    expect(o.getState().tasks[0]?.lock).toBeUndefined();
+
+    const spy = vi.spyOn(github, 'listManagedIssues').mockRejectedValueOnce(new Error('panne'));
+    expect((await o.observe()).errors).toEqual(['panne']);
+    spy.mockRejectedValueOnce('panne brute');
+    expect((await o.observe()).errors).toEqual(['panne brute']);
+    spy.mockRestore();
+
+    const blocked = Orchestrator.blocked({ message: 'gh', command: 'gh auth login' }, options);
+    expect((await blocked.observe()).status).toBe('blocked');
+  });
+});
