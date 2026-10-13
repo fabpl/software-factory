@@ -1,6 +1,6 @@
 # Plan d'implémentation — Jalon 1 (Software Factory)
 
-> Écrit le 13 octobre 2026 à partir des cinq specs approuvées (`docs/spec/`). Statut : **à approuver**.
+> Écrit le 13 octobre 2026 à partir des cinq specs approuvées (`docs/spec/`). Statut : **approuvé** le 13 octobre 2026.
 > Liste de tâches : `tasks/todo.md` jusqu'à ce que la boucle tourne ; ensuite le projet est dogfoodé, et les tâches suivantes deviennent des issues GitHub du dépôt lui-même.
 
 ## Vue d'ensemble
@@ -101,7 +101,7 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 | Pas de CI sur le dépôt cible | Moyen | Carte `action` « Aucune CI configurée » ; ce dépôt en a une dès T0 |
 | Electron + SDK en process : incompatibilités de version Node | Moyen | T21 vérifie tôt que `query()` tourne dans le process principal ; sinon process utilitaire Node séparé (décision à carte) |
 
-## Questions ouvertes
+## Questions tranchées à l'approbation
 
-1. Lint : eslint + prettier (comme tes starter kits) ou biome (comme hinoko) ? Recommandation : eslint + prettier, déjà rodés.
-2. Visibilité du dépôt : public dès A1 (vitrine, dogfooding visible) ou privé jusqu'au jalon 1 ? Recommandation : public dès maintenant, le README dit « en construction ».
+1. Lint : eslint + prettier.
+2. Dépôt public dès A1, README « en construction ».
