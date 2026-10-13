@@ -1,7 +1,7 @@
 # Spec : `agent-adapter`
 
 > Module 3 sur 5 du jalon 1. Aucune dépendance de module. Fournit l'interface `AgentAdapter` consommée par `orchestrator`.
-> Statut : **à approuver**.
+> Statut : **approuvée** le 13 octobre 2026.
 
 ## Objectif
 
@@ -190,7 +190,7 @@ export async function* start(spec: RunSpec): AsyncIterable<FactoryEvent> {
 4. Un run avec un outil requis manquant échoue en moins de dix secondes avec `tools_missing`.
 5. Un `Bash` contenant `git push` est refusé et le run continue.
 
-## Questions ouvertes
+## Questions tranchées à l'approbation
 
-1. `maxTurns` par défaut à 200 : plafond raisonnable pour un run d'implémentation ? Recommandation : 200, plus un `maxBudgetUsd` réglable, mesuré sur les trois premières issues.
-2. Faut-il journaliser le flux `SDKMessage` brut sur disque pour la future salle des machines ? Recommandation : oui, en JSONL dans le dossier de données de l'app, purgé à 30 jours, hors source de vérité.
+1. `maxTurns` 200 par défaut, plus `maxBudgetUsd` réglable. À mesurer sur les trois premières issues.
+2. Le flux `SDKMessage` brut est journalisé en JSONL dans le dossier de données de l'app, purgé à 30 jours. Hors source de vérité : utile à la salle des machines, jamais nécessaire à la reprise.
