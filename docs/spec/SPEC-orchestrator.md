@@ -1,7 +1,7 @@
 # Spec : `orchestrator`
 
 > Module 4 sur 5 du jalon 1. Dépend de [`conventions`](SPEC-conventions.md), [`skills`](SPEC-skills.md), [`agent-adapter`](SPEC-agent-adapter.md). Fournit l'API consommée par `inbox`.
-> Statut : **à approuver**.
+> Statut : **approuvée** le 13 octobre 2026.
 
 ## Objectif
 
@@ -183,7 +183,7 @@ export function reconcile(state: TaskState, local: LocalRuns): Action[] {
 4. Quota GitHub : un tick sans changement consomme zéro appel comptabilisé (tout en 304).
 5. `grep -r "electron" packages/orchestrator/src` ne trouve rien.
 
-## Questions ouvertes
+## Questions tranchées à l'approbation
 
-1. Intervalle de sondage à 30 s : assez réactif pour le dogfooding ? Recommandation : 30 s, et chaque clic force un tick, donc la latence perçue est nulle sur les actions humaines.
-2. Faut-il que l'orchestrateur ouvre la PR brouillon dès la création de la branche (vide) ou au premier commit ? Recommandation : au premier commit, GitHub refuse une PR sans diff.
+1. Sondage à 30 s ; chaque commande force un tick immédiat.
+2. La PR brouillon est ouverte au premier commit.
