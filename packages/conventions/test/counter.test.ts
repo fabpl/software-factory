@@ -16,6 +16,13 @@ describe('parseCounter', () => {
     });
   });
 
+  it('lit le README.md réel du dépôt', () => {
+    const readme = readFileSync(new URL('../../../README.md', import.meta.url), 'utf8');
+    const r = parseCounter(readme);
+    if (!r.ok) throw new Error(JSON.stringify(r.error));
+    expect(r.value.reasons).toHaveLength(r.value.value);
+  });
+
   it('lit la valeur et les raisons dans l’ordre', () => {
     expect(parseCounter(block('**2**\n\n1. première\n2. seconde'))).toEqual({
       ok: true,
