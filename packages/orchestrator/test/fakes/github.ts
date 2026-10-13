@@ -2,6 +2,8 @@ import type { LabelDefinition } from '@factory/conventions';
 import type {
   CiRun,
   CommentData,
+  FileCommit,
+  FileData,
   GitHubPort,
   IssueData,
   PullData,
@@ -20,6 +22,10 @@ export class FakeGitHub implements GitHubPort {
   readonly ciRuns = new Map<string, CiRun>();
   readonly labelsCreated: string[] = [];
   readonly writes: string[] = [];
+  /** Fichiers par `branche:chemin`. */
+  readonly files = new Map<string, FileData>();
+  /** Commits de fichier, dans l'ordre. */
+  readonly fileCommits: { branch: string; path: string; content: string; message: string }[] = [];
   workflows = true;
   me = 'factory-bot';
   private nextNumber = 1;
@@ -59,6 +65,13 @@ export class FakeGitHub implements GitHubPort {
     const pull = this.pulls.find((p) => p.headRef === headRef && p.state === 'open');
     if (pull) pull.headSha = sha;
     return sha;
+  }
+
+  /** Pose un fichier sur une branche (hors commit journalisé) : simule aussi un push concurrent. */
+  putFile(branch: string, path: string, content: string): FileData {
+    const file = { content, sha: `blob${String(this.nextSha++)}` };
+    this.files.set(`${branch}:${path}`, file);
+    return file;
   }
 
   merge(prNumber: number): void {
@@ -116,6 +129,11 @@ export class FakeGitHub implements GitHubPort {
 
   whoami(): Promise<string> {
     return Promise.resolve(this.me);
+  }
+
+  readFile(path: string, branch: string): Promise<FileData | undefined> {
+    const file = this.files.get(`${branch}:${path}`);
+    return Promise.resolve(file ? { ...file } : undefined);
   }
 
   // -- écriture -------------------------------------------------------------
@@ -184,6 +202,26 @@ export class FakeGitHub implements GitHubPort {
     if (!pull) return Promise.reject(new Error(`PR ${String(number)} inconnue`));
     pull.draft = false;
     return Promise.resolve();
+  }
+
+  commitFile(input: {
+    path: string;
+    branch: string;
+    content: string;
+    sha: string;
+    message: string;
+  }): Promise<FileCommit> {
+    if (this.files.get(`${input.branch}:${input.path}`)?.sha !== input.sha)
+      return Promise.resolve({ kind: 'stale' });
+    this.writes.push(`file ${input.branch}:${input.path}`);
+    this.putFile(input.branch, input.path, input.content);
+    this.fileCommits.push({
+      branch: input.branch,
+      path: input.path,
+      content: input.content,
+      message: input.message,
+    });
+    return Promise.resolve({ kind: 'committed', sha: `commit${String(this.fileCommits.length)}` });
   }
 
   ensureLabels(definitions: readonly LabelDefinition[]): Promise<void> {

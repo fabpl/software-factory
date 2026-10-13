@@ -333,6 +333,68 @@ describe('octokit — écritures', () => {
     expect(hits.at(-1)).toMatchObject({ path: '/graphql', body: { variables: { id: 'N9' } } });
   });
 
+  it('fichier : lecture avec sha (jamais en cache), absent, erreur', async () => {
+    const encoded = Buffer.from('# Titre\n\nété\n', 'utf8').toString('base64');
+    server.use(
+      http.get(`${R}/contents/README.md`, ({ request }) => {
+        const ref = new URL(request.url).searchParams.get('ref');
+        hits.push({
+          method: 'GET',
+          path: `README.md@${ref ?? ''}`,
+          counted: true,
+          ifNoneMatch: request.headers.get('if-none-match'),
+          auth: null,
+        });
+        if (ref === 'gone') return HttpResponse.json({ message: 'Not Found' }, { status: 404 });
+        if (ref === 'boom') return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        // GitHub coupe le base64 par lignes de 60 caractères.
+        const content = encoded.replace(/(.{60})/g, '$1\n');
+        return HttpResponse.json(
+          { content, encoding: 'base64', sha: 'r1' },
+          { headers: { etag: 'W/"f"' } },
+        );
+      }),
+    );
+    expect(await github.readFile('README.md', 'main')).toEqual({
+      content: '# Titre\n\nété\n',
+      sha: 'r1',
+    });
+    await github.readFile('README.md', 'main');
+    expect(hits.map((h) => h.ifNoneMatch)).toEqual([null, null]);
+    expect(await github.readFile('README.md', 'gone')).toBeUndefined();
+    await expect(github.readFile('README.md', 'boom')).rejects.toMatchObject({ status: 500 });
+  });
+
+  it('fichier : commit avec sha attendu, sha périmé, erreur', async () => {
+    server.use(
+      http.put(`${R}/contents/README.md`, async ({ request }) => {
+        const body = (await record(request)).body as { sha: string };
+        if (body.sha === 'old')
+          return HttpResponse.json({ message: 'does not match' }, { status: 409 });
+        if (body.sha === 'boom') return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        return HttpResponse.json({ content: { sha: 'f2' }, commit: { sha: 'c2' } });
+      }),
+    );
+    const input = { path: 'README.md', branch: 'main', content: 'été\n', message: 'm' };
+    expect(await github.commitFile({ ...input, sha: 'r1' })).toEqual({
+      kind: 'committed',
+      sha: 'c2',
+    });
+    expect(hits.at(-1)).toMatchObject({
+      method: 'PUT',
+      body: {
+        message: 'm',
+        branch: 'main',
+        sha: 'r1',
+        content: Buffer.from('été\n', 'utf8').toString('base64'),
+      },
+    });
+    expect(await github.commitFile({ ...input, sha: 'old' })).toEqual({ kind: 'stale' });
+    await expect(github.commitFile({ ...input, sha: 'boom' })).rejects.toMatchObject({
+      status: 500,
+    });
+  });
+
   it('ensureLabels ne crée que les étiquettes manquantes', async () => {
     await github.ensureLabels(LABEL_DEFINITIONS);
     const created = hits
