@@ -40,14 +40,14 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 
 ### Phase 0 — Fondations
 - [x] T0 Racine du monorepo (pnpm, tsconfig, eslint + prettier, vitest, CI, NOTICE, README minimal)
-- [ ] A1 Dépôt GitHub créé, CI verte sur un commit vide de tests
+- [x] A1 Dépôt GitHub créé, CI verte sur un commit vide de tests
 
 ### Phase 1 — `conventions`
-- [ ] T2 Étiquettes et transitions de phase
+- [x] T2 Étiquettes et transitions de phase
 - [ ] T3 Contrat : parse, serialize, aller-retour, tolérance, refus
 - [ ] T4 Cartes et réponses
 - [ ] T5 Preuves et bloc de run (autorité sur `proven`)
-- [ ] T6 ADR : gabarit et numérotation
+- [x] T6 ADR : gabarit et numérotation
 - [ ] T6b Script `pnpm conventions:check <issue>` qui lit une issue réelle via `gh api` et affiche le contrat parsé
 
 ### Point de contrôle 1
