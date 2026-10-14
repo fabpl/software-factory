@@ -67,7 +67,7 @@ export function RunIndicator({ run, api }: RunIndicatorProps) {
               className="rounded bg-red-700 px-2 py-1 text-white"
               onClick={() => {
                 setConfirming(false);
-                send(api.commands.cancelRun());
+                void send(api.commands.cancelRun());
               }}
             >
               {LABELS.cancelConfirm}

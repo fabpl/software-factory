@@ -79,6 +79,21 @@ describe('libellés (C5)', () => {
     expect(found).toEqual([]);
   });
 
+  it('barre comprise : tâches dépliées, run et confirmation ouverte, aucun jeton machine (C7)', async () => {
+    const user = userEvent.setup();
+    render(<App api={fakeApi(LOADED)} />);
+    const bar = await screen.findByRole('complementary', { name: 'Tâches' });
+    const tasks = within(bar).getAllByRole('button', { name: /^#\d+ / });
+    expect(tasks).toHaveLength(LOADED.tasks.length);
+    for (const task of tasks) await user.click(task);
+    await user.click(within(bar).getByRole('button', { name: 'Annuler le run' }));
+    await user.click(within(bar).getByRole('button', { name: 'Nouvelle intention' }));
+    const text = document.body.textContent;
+    expect(text).toContain('Outil utilisé');
+    const found = TOKENS.filter((t) => new RegExp(`\\b${t}\\b`).test(text));
+    expect(found).toEqual([]);
+  });
+
   it('chaque type d’événement, phase, besoin, état de CI et statut d’item a un libellé français', () => {
     const types = Object.keys(EVENT_LABELS).sort();
     expect(types).toEqual(EVENT_TYPES.slice().sort());

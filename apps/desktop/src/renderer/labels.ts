@@ -65,6 +65,11 @@ export const LABELS = {
     'L’agent s’arrête ; une carte « Run interrompu » permettra de le relancer plus tard.',
   cancelConfirm: 'Confirmer l’annulation',
   cancelKeep: 'Laisser tourner',
+  newIntent: 'Nouvelle intention',
+  intentTitle: 'Titre',
+  intentBody: 'Texte',
+  createIssue: 'Créer l’issue',
+  close: 'Fermer',
 } as const;
 
 /** Phrase ajoutée au texte d'un désaveu quand la case est cochée (détectée par `shouldHaveBlocked`). */

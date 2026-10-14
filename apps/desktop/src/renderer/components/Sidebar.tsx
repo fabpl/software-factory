@@ -12,6 +12,7 @@ import {
   formatStartBlocker,
 } from '../labels';
 import { send } from '../send';
+import { NewIntentDialog } from './NewIntentDialog';
 import { RunIndicator } from './RunIndicator';
 
 export interface SidebarProps {
@@ -41,13 +42,14 @@ export function Sidebar({ state, api }: SidebarProps) {
             title={LABELS.refresh}
             className="ml-auto rounded p-1 hover:bg-neutral-100"
             onClick={() => {
-              send(api.commands.refresh());
+              void send(api.commands.refresh());
             }}
           >
             <RefreshCw aria-hidden className="size-3.5" />
           </button>
         </span>
       </div>
+      <NewIntentDialog api={api} />
       <RunIndicator run={state.run} api={api} />
       {PHASES.map((phase) => (
         <PhaseGroup
@@ -166,7 +168,7 @@ function TaskActions({ task, api }: { task: TaskView; api: SidebarProps['api'] }
           type="button"
           className={buttonClass}
           onClick={() => {
-            send(commands.startFraming(task.issue));
+            void send(commands.startFraming(task.issue));
           }}
         >
           {LABELS.startFraming}
@@ -179,7 +181,7 @@ function TaskActions({ task, api }: { task: TaskView; api: SidebarProps['api'] }
             className={buttonClass}
             disabled={task.startBlockers.length > 0}
             onClick={() => {
-              send(commands.startImplementation(task.issue));
+              void send(commands.startImplementation(task.issue));
             }}
           >
             {LABELS.startImplementation}
@@ -211,7 +213,7 @@ function TaskActions({ task, api }: { task: TaskView; api: SidebarProps['api'] }
             className={buttonClass}
             disabled={reason.trim() === ''}
             onClick={() => {
-              send(commands.sendBackToFraming(task.issue, reason.trim()));
+              void send(commands.sendBackToFraming(task.issue, reason.trim()));
             }}
           >
             {LABELS.sendBackToFraming}
