@@ -257,6 +257,21 @@ describe('orchestrator', () => {
     expect(github.pulls).toHaveLength(0);
   });
 
+  it('createIntent : issue créée en phase:intent avec le texte tel quel, puis tick', async () => {
+    const { github, options } = setup();
+    const o = new Orchestrator(options);
+    await o.createIntent('Nouvelle idée', 'Texte **libre**\n\nsur deux paragraphes');
+    const created = [...github.issues.values()];
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({
+      title: 'Nouvelle idée',
+      body: 'Texte **libre**\n\nsur deux paragraphes',
+      labels: ['phase:intent'],
+    });
+    expect(github.writes[0]).toBe(`issue ${String(created[0]?.number)}`);
+    expect(o.getState().tasks).toMatchObject([{ title: 'Nouvelle idée', phase: 'intent' }]);
+  });
+
   it('startFraming sur une tâche déjà en cadrage : relance si le bloc est finished, sinon rien', async () => {
     const prompts: string[] = [];
     const adapter = adapterOf((s) => {

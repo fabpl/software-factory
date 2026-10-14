@@ -139,6 +139,12 @@ export class FakeGitHub implements GitHubPort {
 
   // -- écriture -------------------------------------------------------------
 
+  createIssue(title: string, body: string, labels: readonly string[]): Promise<IssueData> {
+    const issue = this.addIssue({ title, body, labels: [...labels] });
+    this.writes.push(`issue ${String(issue.number)}`);
+    return Promise.resolve({ ...issue });
+  }
+
   setLabels(number: number, labels: readonly string[]): Promise<void> {
     this.writes.push(`labels ${String(number)} ${labels.join(',')}`);
     this.issue(number).labels = [...labels];

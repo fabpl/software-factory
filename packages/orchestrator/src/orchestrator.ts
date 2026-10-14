@@ -178,6 +178,17 @@ export class Orchestrator {
 
   // -- commandes : écrivent dans GitHub puis forcent un tick -------------------
 
+  /** Nouvelle intention : une issue `phase:intent` dont le corps est le texte tel quel. */
+  async createIntent(title: string, body: string): Promise<void> {
+    this.assertReady();
+    await this.options.github.createIssue(
+      title,
+      body,
+      labelsFor({ phase: 'intent', needs: new Set(), others: [] }),
+    );
+    await this.tick();
+  }
+
   /**
    * `phase:intent → phase:framing`. Sur une tâche déjà en cadrage dont le run est `finished`
    * (contrat laissé inachevé), relance : le bloc de run passe `failed`, le tick suivant redémarre

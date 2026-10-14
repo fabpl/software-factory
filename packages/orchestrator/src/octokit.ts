@@ -303,6 +303,16 @@ export function createOctokitGitHub(options: OctokitOptions): OctokitGitHub {
       }
     },
 
+    async createIssue(title, body, labels) {
+      const res = await request<GhIssue>('POST /repos/{owner}/{repo}/issues', {
+        ...repo,
+        title,
+        body,
+        labels: [...labels],
+      });
+      return toIssue(res.data);
+    },
+
     async setLabels(number, labels) {
       await request('PUT /repos/{owner}/{repo}/issues/{issue_number}/labels', {
         ...repo,
