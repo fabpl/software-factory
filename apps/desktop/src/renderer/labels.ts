@@ -58,6 +58,13 @@ export const LABELS = {
   prDraft: 'brouillon',
   prReady: 'prête',
   prMerged: 'fusionnée',
+  since: (duration: string) => `depuis ${duration}`,
+  cancelRun: 'Annuler le run',
+  cancelConfirmTitle: 'Annuler le run en cours ?',
+  cancelConfirmText:
+    'L’agent s’arrête ; une carte « Run interrompu » permettra de le relancer plus tard.',
+  cancelConfirm: 'Confirmer l’annulation',
+  cancelKeep: 'Laisser tourner',
 } as const;
 
 /** Phrase ajoutée au texte d'un désaveu quand la case est cochée (détectée par `shouldHaveBlocked`). */

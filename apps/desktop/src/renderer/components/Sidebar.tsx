@@ -12,6 +12,7 @@ import {
   formatStartBlocker,
 } from '../labels';
 import { send } from '../send';
+import { RunIndicator } from './RunIndicator';
 
 export interface SidebarProps {
   state: InboxState;
@@ -47,6 +48,7 @@ export function Sidebar({ state, api }: SidebarProps) {
           </button>
         </span>
       </div>
+      <RunIndicator run={state.run} api={api} />
       {PHASES.map((phase) => (
         <PhaseGroup
           key={phase}
