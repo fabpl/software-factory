@@ -54,6 +54,7 @@ export class FakeGitHub implements GitHubPort {
       id,
       body,
       url: `https://github.test/acme/widget/issues/${String(number)}#issuecomment-${String(id)}`,
+      createdAt: '2026-10-14T10:00:00Z',
     };
     this.comments.set(number, [...(this.comments.get(number) ?? []), comment]);
     return comment;

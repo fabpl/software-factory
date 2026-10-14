@@ -11,7 +11,7 @@ Succès : l'humain traite une issue de ce dépôt de l'intention au verdict en n
 
 ## Stack
 
-- Electron (version épinglée), `electron-vite`, React 19, TypeScript 5, Tailwind 4, shadcn/ui (Radix), lucide-react, sonner.
+- Electron (version épinglée), `electron-vite`, React 19, TypeScript 5, Tailwind 4, shadcn/ui (Radix), lucide-react, sonner, react-markdown (contexte des cartes, sans `rehype-raw` : aucun HTML brut rendu, encapsulé dans `Markdown.tsx`).
 - Paquet `apps/desktop` : `src/main` (process principal, branche `Orchestrator` sur IPC), `src/preload` (`contextBridge`), `src/renderer` (React).
 - `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true` côté renderer. Le renderer ne voit que l'API typée exposée par le preload.
 - Pas de gestionnaire d'état : `InboxState` arrive entier via IPC, l'interface est une fonction pure de cet état plus un état local d'ouverture de cartes.

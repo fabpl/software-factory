@@ -106,6 +106,7 @@ export function card(
       number: place === 'pr' ? 20 : 7,
       commentId: 1,
       url: 'https://github.test/acme/widget/issues/7#issuecomment-1',
+      createdAt: '2026-10-14T10:00:00Z',
     },
   };
   if (answer) out.answer = answer;

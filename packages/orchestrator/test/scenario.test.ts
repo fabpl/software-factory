@@ -210,7 +210,8 @@ describe('scénario complet : intention → framing → implementation → evide
       'needs:arbitration',
     ]);
     const state = b.getState();
-    expect(state.validate.map((c) => c.id)).toEqual(['card-4']);
+    // D2 : la preuve to-review de C2 rejoint la file Valider après les cartes.
+    expect(state.validate.map((c) => c.id)).toEqual(['card-4', '2:C2']);
     expect(state.arbitrate.map((c) => c.id)).toEqual(['card-5']);
     expect(state.tasks[0]?.pr).toMatchObject({ number: 2, draft: true, ci: { kind: 'none' } });
   });

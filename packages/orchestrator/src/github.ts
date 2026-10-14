@@ -24,6 +24,8 @@ export interface CommentData {
   id: number;
   body: string;
   url: string;
+  /** Date de création ISO 8601 (`created_at`) : l'âge affiché par l'inbox. */
+  createdAt: string;
 }
 
 export interface PullData {

@@ -50,6 +50,7 @@ interface GhComment {
   id: number;
   body?: string;
   html_url: string;
+  created_at: string;
 }
 interface GhPull {
   number: number;
@@ -92,7 +93,7 @@ function toIssue(i: GhIssue): IssueData {
 }
 
 function toComment(c: GhComment): CommentData {
-  return { id: c.id, body: c.body ?? '', url: c.html_url };
+  return { id: c.id, body: c.body ?? '', url: c.html_url, createdAt: c.created_at };
 }
 
 function toPull(p: GhPull): PullData {

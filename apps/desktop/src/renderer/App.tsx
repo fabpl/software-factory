@@ -1,12 +1,14 @@
 import type { InboxState } from '@factory/orchestrator';
 import { useEffect, useState } from 'react';
+import { Toaster } from 'sonner';
 import type { Api } from '../shared/api';
 import { BlockedScreen } from './components/BlockedScreen';
+import { Column } from './components/Column';
 import { LABELS } from './labels';
 
 /**
- * L'interface est une fonction pure de l'`InboxState` reçu par IPC (SPEC-inbox). T21 : écran
- * `blocked` ou écran d'attente neutre ; les trois colonnes arrivent avec T22.
+ * L'interface est une fonction pure de l'`InboxState` reçu par IPC (SPEC-inbox) : écran `blocked`,
+ * sinon les trois files Arbitrer, Valider, Agir telles que l'orchestrateur les publie (H1).
  */
 export function App({ api }: { api: Api }) {
   const [state, setState] = useState<InboxState | undefined>();
@@ -30,12 +32,11 @@ export function App({ api }: { api: Api }) {
     );
   }
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-2 bg-neutral-50 text-neutral-700">
-      <h1 className="text-lg font-semibold text-neutral-900">{LABELS.readyTitle}</h1>
-      <p className="text-sm">{LABELS.readyHint}</p>
-      <p className="text-xs text-neutral-500">
-        {LABELS.lastSync} : {state.lastSync.toLocaleTimeString('fr-FR')}
-      </p>
+    <main className="flex min-h-screen items-start gap-4 bg-neutral-50 p-4">
+      <Column queue="arbitrate" cards={state.arbitrate} api={api} />
+      <Column queue="validate" cards={state.validate} api={api} />
+      <Column queue="act" cards={state.act} api={api} />
+      <Toaster position="bottom-right" />
     </main>
   );
 }

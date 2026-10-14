@@ -21,6 +21,8 @@ const issue = (labels: string[], extra: Partial<TaskInput['issue']> = {}): TaskI
   ...extra,
 });
 
+const AT = '2026-10-14T10:00:00Z';
+
 const CARD = (id: string, kind: string, origin: string, status = 'open'): string =>
   `<!-- factory:card id=${id} kind=${kind} origin=${origin} reversibility=reversible status=${status} skill=framing@0.1.0 -->\n### ❓ Q — Titre ${id}\n\n**Contexte** — x\n\n**Options**\n- **A.** a\n- **B.** b\n`;
 
@@ -45,14 +47,20 @@ describe('state — buildTaskState', () => {
         body: 'Intention.\n\n' + contractBody(),
       }),
       comments: [
-        { id: 1, body: CARD('card-1', 'question', 'framing', 'answered'), url: 'c1' },
-        { id: 2, body: '<!-- factory:answer card=card-1 choice=A -->', url: 'a1' },
+        {
+          id: 1,
+          body: CARD('card-1', 'question', 'framing', 'answered'),
+          url: 'c1',
+          createdAt: AT,
+        },
+        { id: 2, body: '<!-- factory:answer card=card-1 choice=A -->', url: 'a1', createdAt: AT },
         {
           id: 3,
           body: '<!-- factory:run session=s-f skill=framing@0.1.0 turns=1 cost_usd=0.10 updated=2026-10-13T10:00:00Z status=finished -->',
           url: 'r1',
+          createdAt: AT,
         },
-        { id: 4, body: 'commentaire humain', url: 'h' },
+        { id: 4, body: 'commentaire humain', url: 'h', createdAt: AT },
       ],
       pull: {
         data: {
@@ -67,17 +75,29 @@ describe('state — buildTaskState', () => {
           url: 'p',
         },
         comments: [
-          { id: 5, body: CARD('card-2', 'arbitration', 'implementation'), url: 'c2' },
-          { id: 6, body: '<!-- factory:answer card=card-2 choice=B -->\nok', url: 'a2' },
+          {
+            id: 5,
+            body: CARD('card-2', 'arbitration', 'implementation'),
+            url: 'c2',
+            createdAt: AT,
+          },
+          {
+            id: 6,
+            body: '<!-- factory:answer card=card-2 choice=B -->\nok',
+            url: 'a2',
+            createdAt: AT,
+          },
           {
             id: 7,
             body: '<!-- factory:run session=s-i skill=implementation@0.1.0 turns=2 cost_usd=0.20 updated=2026-10-13T10:00:00Z status=waiting card=card-2 -->',
             url: 'r2',
+            createdAt: AT,
           },
           {
             id: 8,
             body: '<!-- factory:evidence contract=2 skill=implementation@0.1.0 -->\n## Preuves\n\n| Critère | Preuve | État |\n|---|---|---|\n| C1 | `a` | `pending` |',
             url: 'e',
+            createdAt: AT,
           },
         ],
         ci: { url: 'ci', status: 'completed', conclusion: 'failure' },
@@ -119,6 +139,7 @@ describe('state — buildTaskState', () => {
           id: 3,
           body: '<!-- factory:run session=s-f skill=framing@0.1.0 turns=1 cost_usd=0.10 updated=2026-10-13T10:00:00Z status=finished -->',
           url: 'r',
+          createdAt: AT,
         },
       ],
     });
@@ -178,7 +199,7 @@ describe('state — vues inbox', () => {
             recommendation: { letter: 'A', text: 'r' },
             changeCost: 'faible',
           },
-          location: { place: 'pr', number: 9, commentId: 1, url: 'c1' },
+          location: { place: 'pr', number: 9, commentId: 1, url: 'c1', createdAt: AT },
         },
         {
           card: {
@@ -192,7 +213,7 @@ describe('state — vues inbox', () => {
             options: [],
             reversibility: 'reversible',
           },
-          location: { place: 'pr', number: 9, commentId: 2, url: 'c2' },
+          location: { place: 'pr', number: 9, commentId: 2, url: 'c2', createdAt: AT },
         },
         {
           card: {
@@ -209,7 +230,7 @@ describe('state — vues inbox', () => {
             ],
             reversibility: 'irreversible',
           },
-          location: { place: 'pr', number: 9, commentId: 3, url: 'c3' },
+          location: { place: 'pr', number: 9, commentId: 3, url: 'c3', createdAt: AT },
         },
         {
           card: {
@@ -226,7 +247,7 @@ describe('state — vues inbox', () => {
             ],
             reversibility: 'reversible',
           },
-          location: { place: 'pr', number: 9, commentId: 4, url: 'c4' },
+          location: { place: 'pr', number: 9, commentId: 4, url: 'c4', createdAt: AT },
         },
       ],
     });
@@ -285,6 +306,115 @@ describe('state — vues inbox', () => {
       errors: [],
     });
     expect(blocked.run).toBeUndefined();
+  });
+});
+
+describe('state — preuves à revoir et dates (C6)', () => {
+  const EVIDENCE_BODY = [
+    '<!-- factory:evidence contract=2 skill=implementation@0.1.0 -->',
+    '## Preuves',
+    '',
+    '| Critère | Preuve | État |',
+    '|---|---|---|',
+    '| C1 | [capture](https://github.test/acme/widget/blob/f/docs/c1.png) | `to-review` |',
+    '| C2 | `labels.unknown` | `pending` |',
+    '| C3 | [run](https://github.test/acme/widget/actions/runs/1) | `proven` |',
+    '| C4 | — | `blocked` : nécessite un token |',
+    '| C5 | `docs/c5.md` | `to-review` |',
+  ].join('\n');
+
+  function implTask(prState: 'open' | 'closed' = 'open') {
+    const built = buildTaskState({
+      issue: issue(['phase:implementation'], { body: 'Intention.\n\n' + contractBody() }),
+      comments: [
+        {
+          id: 1,
+          body: CARD('card-1', 'question', 'framing'),
+          url: 'c1',
+          createdAt: '2026-10-14T09:00:00Z',
+        },
+      ],
+      pull: {
+        data: {
+          number: 20,
+          title: 't',
+          body: '',
+          draft: true,
+          headRef: 'factory/7-x',
+          headSha: 'abc',
+          merged: false,
+          state: prState,
+          url: 'p',
+        },
+        comments: [
+          {
+            id: 5,
+            body: CARD('card-2', 'decision', 'implementation'),
+            url: 'c2',
+            createdAt: '2026-10-14T09:30:00Z',
+          },
+          { id: 8, body: EVIDENCE_BODY, url: 'e', createdAt: '2026-10-14T09:45:00Z' },
+        ],
+        ci: undefined,
+      },
+    });
+    if (!built.ok) throw new Error('état attendu');
+    return built.value;
+  }
+
+  it('une CardView evidence par critère to-review, publiée dans Valider après les items', () => {
+    const inbox = buildInboxState([implTask()], { lastSync: new Date() });
+    const evidences = inbox.validate.filter((c) => c.kind === 'evidence');
+    expect(evidences.map((c) => c.evidence?.criterion)).toEqual(['C1', 'C5']);
+    expect(inbox.validate.map((c) => c.id)).toEqual(['card-2', '20:C1', '20:C5']);
+    expect(evidences[0]).toMatchObject({
+      issue: 7,
+      issueTitle: 'Un titre',
+      title: 'C1 — Un critère.',
+      url: 'e',
+      createdAt: '2026-10-14T09:45:00Z',
+      evidence: {
+        pr: 20,
+        criterion: 'C1',
+        artifactUrl: 'https://github.test/acme/widget/blob/f/docs/c1.png',
+      },
+    });
+    expect(evidences[1]?.evidence).toEqual({ pr: 20, criterion: 'C5' });
+    expect(evidences[1]?.context).toBe('`docs/c5.md`');
+  });
+
+  it('critère absent du contrat (ou pas de contrat) : l’identifiant seul sert de titre', () => {
+    const inbox = buildInboxState([implTask()], { lastSync: new Date() });
+    expect(inbox.validate.find((c) => c.id === '20:C5')?.title).toBe('C5');
+    const t = implTask();
+    delete t.contract;
+    const bare = buildInboxState([t], { lastSync: new Date() });
+    expect(bare.validate.find((c) => c.id === '20:C1')?.title).toBe('C1');
+  });
+
+  it('preuves sans commentaire source connu : ni url ni createdAt', () => {
+    const t = implTask();
+    if (t.pr) delete t.pr.evidenceComment;
+    const inbox = buildInboxState([t], { lastSync: new Date() });
+    const view = inbox.validate.find((c) => c.id === '20:C1');
+    expect(view?.url).toBeUndefined();
+    expect(view?.createdAt).toBeUndefined();
+  });
+
+  it('aucune CardView evidence pour proven / blocked / pending, ni pour une PR fermée', () => {
+    const open = buildInboxState([implTask()], { lastSync: new Date() });
+    const criteria = open.validate.flatMap((c) => (c.evidence ? [c.evidence.criterion] : []));
+    expect(criteria).not.toContain('C2');
+    expect(criteria).not.toContain('C3');
+    expect(criteria).not.toContain('C4');
+    const closed = buildInboxState([implTask('closed')], { lastSync: new Date() });
+    expect(closed.validate.filter((c) => c.kind === 'evidence')).toEqual([]);
+  });
+
+  it('chaque CardView de carte porte le createdAt de son commentaire', () => {
+    const inbox = buildInboxState([implTask()], { lastSync: new Date() });
+    expect(inbox.arbitrate[0]).toMatchObject({ id: 'card-1', createdAt: '2026-10-14T09:00:00Z' });
+    expect(inbox.validate[0]).toMatchObject({ id: 'card-2', createdAt: '2026-10-14T09:30:00Z' });
   });
 });
 
