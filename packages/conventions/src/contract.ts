@@ -53,7 +53,10 @@ const SECTION_TITLES: Record<ItemKind, string> = {
 const KIND_PREFIX: Record<ItemKind, string> = { hypothesis: 'H', decision: 'D', criterion: 'C' };
 const PREFIX_KIND: Record<string, ItemKind> = { H: 'hypothesis', D: 'decision', C: 'criterion' };
 
-const ITEM_RE = /^- \[( |x|X)\] \*\*([HDC]\d+)\*\* — (.+?) `([a-z-]+)`(?: \((.+)\))?\s*$/;
+// Texte glouton : le statut est le dernier jeton entre accents graves suivi, au plus, de la note entre
+// parenthèses. Un jeton du texte suivi d'une parenthèse (« job `check` (inchangé) ») n'est donc pas pris pour
+// le statut.
+const ITEM_RE = /^- \[( |x|X)\] \*\*([HDC]\d+)\*\* — (.+) `([a-z-]+)`(?: \((.+)\))?\s*$/;
 const PROOF_RE = /^\s+Preuve prévue : (.+?)\s*$/;
 
 function isStatus(s: string): s is ItemStatus {

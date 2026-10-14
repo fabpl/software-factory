@@ -50,6 +50,30 @@ describe('parseContract', () => {
     ]);
   });
 
+  it('prend pour statut le dernier jeton, pas un jeton du texte suivi d’une parenthèse', () => {
+    const r = parseContract(
+      wrap(
+        '### Décisions\n- [x] **D4** — Job `e2e` à côté du job `check` (inchangé, `ubuntu-latest`) ; ni `xvfb-run`. `validated` ((carte card-4))',
+      ),
+    );
+    expect(r).toEqual({
+      ok: true,
+      value: {
+        version: 1,
+        skill: 'framing@0.1.0',
+        items: [
+          {
+            id: 'D4',
+            kind: 'decision',
+            text: 'Job `e2e` à côté du job `check` (inchangé, `ubuntu-latest`) ; ni `xvfb-run`.',
+            status: 'validated',
+            note: '(carte card-4)',
+          },
+        ],
+      },
+    });
+  });
+
   it('signale l’absence de bloc', () => {
     expect(parseContract('Juste une intention.')).toEqual({
       ok: false,
