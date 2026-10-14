@@ -1,6 +1,6 @@
 import type { InboxState } from '@factory/orchestrator';
 
-/** Orchestrateur prêt, aucune tâche : l'écran d'attente de T21. */
+/** Orchestrateur prêt, aucune tâche : trois colonnes « Rien à faire ici ». */
 export const EMPTY: InboxState = {
   status: 'ready',
   validate: [],

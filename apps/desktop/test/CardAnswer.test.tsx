@@ -225,7 +225,7 @@ describe('Card dépliée — corps', () => {
     expect(body.getByText('Le contexte est écrit en Markdown.')).toBeTruthy();
     expect(body.getByText('Moyen : remplacer le composant de rendu.')).toBeTruthy();
     expect(body.getByText('Implémentation')).toBeTruthy();
-    expect(body.getByText('implementation@0.1.0')).toBeTruthy();
+    expect(body.getByText('Implémentation 0.1.0')).toBeTruthy();
     expect(body.getByRole('link', { name: 'Ouvrir dans GitHub' }).getAttribute('href')).toBe(
       ARBITRATION.url,
     );

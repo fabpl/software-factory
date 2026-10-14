@@ -10,7 +10,14 @@ import {
 } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
 import type { Api } from '../../shared/api';
-import { KIND_LABELS, LABELS, ORIGIN_LABELS, REVERSIBILITY_LABELS, formatAge } from '../labels';
+import {
+  KIND_LABELS,
+  LABELS,
+  ORIGIN_LABELS,
+  REVERSIBILITY_LABELS,
+  formatAge,
+  formatSkill,
+} from '../labels';
 import { CardAnswer, type KeyHandler } from './CardAnswer';
 import { Markdown } from './Markdown';
 
@@ -128,7 +135,7 @@ function CardBody({ card }: { card: CardView }) {
         {card.origin !== undefined && (
           <Meta label={LABELS.origin}>{ORIGIN_LABELS[card.origin]}</Meta>
         )}
-        {card.skill !== undefined && <Meta label={LABELS.skill}>{card.skill}</Meta>}
+        {card.skill !== undefined && <Meta label={LABELS.skill}>{formatSkill(card.skill)}</Meta>}
       </dl>
       <div className="flex gap-4 text-sm">
         {card.evidence?.artifactUrl !== undefined && (

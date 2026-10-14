@@ -13,8 +13,6 @@ export const LABELS = {
   copied: 'Copié',
   retry: 'Réessayer',
   retrying: 'Réessai…',
-  readyTitle: 'Orchestrateur prêt',
-  readyHint: 'Les files Arbitrer, Valider et Agir arrivent avec la tâche suivante.',
   lastSync: 'Dernière synchronisation',
   empty: 'Rien à faire ici',
   recommended: 'Recommandé',
@@ -70,6 +68,19 @@ export const ORIGIN_LABELS: Record<CardOrigin, string> = {
   framing: 'Cadrage',
   implementation: 'Implémentation',
 };
+
+const SKILL_LABELS: Readonly<Record<string, string>> = {
+  framing: 'Cadrage',
+  implementation: 'Implémentation',
+  orchestrator: 'Orchestrateur',
+};
+
+/** `implementation@0.1.0` → « Implémentation 0.1.0 » ; un nom inconnu reste tel quel. */
+export function formatSkill(skill: string): string {
+  const [name = '', version] = skill.split('@');
+  const label = SKILL_LABELS[name] ?? name;
+  return version === undefined ? label : `${label} ${version}`;
+}
 
 /** Âge relatif en français : « à l'instant », « il y a 12 min », « il y a 3 h », « il y a 2 j ». */
 export function formatAge(createdAt: string, now: number): string {

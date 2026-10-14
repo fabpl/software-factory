@@ -1,13 +1,18 @@
 // @vitest-environment jsdom
 import type { InboxState } from '@factory/orchestrator';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { App } from '../src/renderer/App';
 import { BLOCKED } from '../src/renderer/fixtures/blocked';
 import { EMPTY } from '../src/renderer/fixtures/empty';
+import { LOADED } from '../src/renderer/fixtures/loaded';
 import { fakeApi, inboxState } from './fakes';
 
 afterEach(cleanup);
+
+function columns(): string[] {
+  return screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+}
 
 describe('App (H1)', () => {
   it('affiche l’écran bloqué quand status === "blocked"', async () => {
@@ -22,12 +27,11 @@ describe('App (H1)', () => {
     expect(screen.getAllByText('Prérequis manquant')).toHaveLength(2);
   });
 
-  it('sinon un écran d’attente neutre, sans colonnes', async () => {
+  it('sinon les trois colonnes, dans l’ordre Arbitrer, Valider, Agir', async () => {
     render(<App api={fakeApi(EMPTY)} />);
-    expect(await screen.findByText('Orchestrateur prêt')).toBeTruthy();
-    expect(screen.queryByText('Arbitrer')).toBeNull();
-    expect(screen.queryByText('Valider')).toBeNull();
-    expect(screen.queryByText('Agir')).toBeNull();
+    await screen.findAllByRole('region');
+    expect(columns()).toEqual(['Arbitrer0', 'Valider0', 'Agir0']);
+    expect(screen.getAllByText('Rien à faire ici')).toHaveLength(3);
   });
 
   it('avant le premier état, un message de connexion', () => {
@@ -37,10 +41,15 @@ describe('App (H1)', () => {
     expect(screen.getByText('Connexion à l’orchestrateur…')).toBeTruthy();
   });
 
-  it('suit les états publiés par subscribe', async () => {
-    const api = fakeApi(EMPTY);
+  it('suit les états publiés par subscribe : la carte quitte sa colonne au prochain état', async () => {
+    const api = fakeApi(LOADED);
     render(<App api={api} />);
-    await screen.findByText('Orchestrateur prêt');
+    expect(await screen.findByText(LOADED.act[0]?.title ?? '')).toBeTruthy();
+    act(() => {
+      api.publish({ ...LOADED, act: [] });
+    });
+    expect(screen.queryByText(LOADED.act[0]?.title ?? '')).toBeNull();
+    expect(columns()).toEqual(['Arbitrer2', 'Valider3', 'Agir0']);
     act(() => {
       api.publish(BLOCKED);
     });
@@ -50,9 +59,41 @@ describe('App (H1)', () => {
   it('se désabonne au démontage', async () => {
     const api = fakeApi(EMPTY);
     const { unmount } = render(<App api={api} />);
-    await screen.findByText('Orchestrateur prêt');
+    await screen.findAllByRole('region');
     expect(api.listeners.size).toBe(1);
     unmount();
     expect(api.listeners.size).toBe(0);
+  });
+});
+
+describe('fixtures InboxState (C1)', () => {
+  it.each([
+    ['vide', EMPTY],
+    ['chargée', LOADED],
+    ['bloquée', BLOCKED],
+  ] as const)('la fixture %s rend sans erreur', async (_name, state) => {
+    render(<App api={fakeApi(state)} />);
+    expect(await screen.findByRole('main')).toBeTruthy();
+  });
+
+  it('la fixture chargée contient chaque type de carte, un item pending et un run en cours', () => {
+    const cards = [...LOADED.arbitrate, ...LOADED.validate, ...LOADED.act];
+    expect(new Set(cards.map((c) => c.kind))).toEqual(
+      new Set(['question', 'arbitration', 'decision', 'action', 'item', 'evidence']),
+    );
+    expect(cards.find((c) => c.kind === 'item')?.item?.status).toBe('pending');
+    expect(LOADED.run).toBeDefined();
+  });
+
+  it('la fixture chargée répartit ses cartes dans les colonnes, dans l’ordre reçu', async () => {
+    render(<App api={fakeApi(LOADED)} />);
+    await screen.findAllByRole('article');
+    expect(columns()).toEqual(['Arbitrer2', 'Valider3', 'Agir1']);
+    const valider = screen.getByRole('region', { name: /^Valider/ });
+    expect(
+      within(valider)
+        .getAllByRole('heading', { level: 3 })
+        .map((h) => h.textContent),
+    ).toEqual(LOADED.validate.map((c) => c.title));
   });
 });
