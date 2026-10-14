@@ -7,7 +7,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       // Fonctions pures et effets testables en CI : 100 %. `index.ts` (fenêtre réelle), `probe.ts`
-      // (sonde SDK, hors CI), le preload et `main.tsx` ne s'exercent qu'avec Electron.
+      // (sonde SDK, hors CI), `app.ts`, `preload/index.ts` et `main.tsx` ne s'exercent qu'avec Electron.
       include: [
         'src/main/home.ts',
         'src/main/ipc.ts',
@@ -18,6 +18,7 @@ export default defineConfig({
         'src/main/runtime.ts',
         'src/main/tray.ts',
         'src/main/window.ts',
+        'src/preload/api.ts',
         'src/renderer/App.tsx',
         'src/renderer/components/**/*.tsx',
         'src/renderer/labels.ts',

@@ -46,11 +46,16 @@ export interface Commands extends OrchestratorCommands {
 export interface Api {
   getState(): Promise<InboxState>;
   subscribe(listener: (state: InboxState) => void): () => void;
+  /** Identifiant de la carte à déplier, envoyé au clic sur une notification (H7). */
+  onFocus(listener: (cardId: string) => void): () => void;
   commands: Commands;
 }
 
-/** Canal `ipcRenderer.send` → renderer : chaque `InboxState` publié. */
+/** Canal `webContents.send` → renderer : chaque `InboxState` publié. */
 export const STATE_CHANNEL = 'factory:state';
+
+/** Canal `webContents.send` → renderer : identifiant de la carte à ouvrir (H7). */
+export const FOCUS_CHANNEL = 'factory:focus';
 
 export function channel(name: string): string {
   return `factory:${name}`;

@@ -8,7 +8,7 @@ import {
   SquarePen,
   type LucideIcon,
 } from 'lucide-react';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Api } from '../../shared/api';
 import {
   KIND_LABELS,
@@ -30,18 +30,34 @@ const KIND_ICONS: Record<CardView['kind'], LucideIcon> = {
   evidence: Search,
 };
 
+/** « Ouvrir sur la carte » (H7) : `seq` change à chaque clic de notification. */
+export interface FocusRequest {
+  cardId: string;
+  seq: number;
+}
+
 export interface CardProps {
   card: CardView;
   api: Pick<Api, 'commands'>;
+  focus?: FocusRequest | undefined;
 }
 
 /** Carte repliée : icône, type, titre, issue, réversibilité, âge ; un clic déplie (SPEC-inbox). */
-export function Card({ card, api }: CardProps) {
+export function Card({ card, api, focus }: CardProps) {
   const [open, setOpen] = useState(false);
   const answer = useRef<KeyHandler>(null);
+  const element = useRef<HTMLElement>(null);
   const Icon = KIND_ICONS[card.kind];
+
+  useEffect(() => {
+    if (focus?.cardId !== card.id) return;
+    setOpen(true);
+    element.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [focus, card.id]);
+
   return (
     <article
+      ref={element}
       aria-expanded={open}
       aria-labelledby={`card-${card.id}-title`}
       className="rounded-lg border border-neutral-200 bg-white shadow-sm"
