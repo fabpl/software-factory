@@ -2,7 +2,14 @@ import type { InboxState } from '@factory/orchestrator';
 import { describe, expect, it, vi } from 'vitest';
 import { registerIpc } from '../src/main/ipc';
 import { createRuntime } from '../src/main/runtime';
-import { channel, ORCHESTRATOR_COMMANDS, type OrchestratorCommands } from '../src/shared/api';
+import { createApi, type IpcRendererPort } from '../src/preload/api';
+import {
+  channel,
+  FOCUS_CHANNEL,
+  ORCHESTRATOR_COMMANDS,
+  STATE_CHANNEL,
+  type OrchestratorCommands,
+} from '../src/shared/api';
 import { fakeIpcMain, fakeOrchestrator, inboxState } from './fakes';
 
 async function setup() {
@@ -66,5 +73,65 @@ describe('registerIpc (H4, C2)', () => {
     orchestrator.publish(next);
     expect(send).toHaveBeenCalledTimes(2);
     expect(send).toHaveBeenLastCalledWith(next);
+  });
+});
+
+describe('preload : window.api (H4, H7, C5)', () => {
+  function fakeIpcRenderer() {
+    const listeners = new Map<string, Set<(event: unknown, ...args: unknown[]) => void>>();
+    return {
+      listeners,
+      emit(name: string, ...args: unknown[]) {
+        for (const l of listeners.get(name) ?? []) l({}, ...args);
+      },
+      invoke: vi.fn<IpcRendererPort['invoke']>(() => Promise.resolve(undefined)),
+      on(name: string, listener: (event: unknown, ...args: unknown[]) => void) {
+        const set = listeners.get(name) ?? new Set();
+        set.add(listener);
+        listeners.set(name, set);
+      },
+      removeListener(name: string, listener: (event: unknown, ...args: unknown[]) => void) {
+        listeners.get(name)?.delete(listener);
+      },
+    };
+  }
+
+  it('onFocus relaie chaque identifiant reçu sur factory:focus, jusqu’au désabonnement', () => {
+    const ipc = fakeIpcRenderer();
+    const api = createApi(ipc);
+    const listener = vi.fn<(cardId: string) => void>();
+    const unsubscribe = api.onFocus(listener);
+    expect(FOCUS_CHANNEL).toBe('factory:focus');
+    ipc.emit(FOCUS_CHANNEL, 'card-7');
+    expect(listener).toHaveBeenCalledWith('card-7');
+    unsubscribe();
+    ipc.emit(FOCUS_CHANNEL, 'card-8');
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('subscribe relaie chaque état reçu sur factory:state, jusqu’au désabonnement', () => {
+    const ipc = fakeIpcRenderer();
+    const api = createApi(ipc);
+    const listener = vi.fn<(state: InboxState) => void>();
+    const unsubscribe = api.subscribe(listener);
+    const state = inboxState();
+    ipc.emit(STATE_CHANNEL, state);
+    expect(listener).toHaveBeenCalledWith(state);
+    unsubscribe();
+    ipc.emit(STATE_CHANNEL, state);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('getState et chaque commande passent par invoke sur leur canal', async () => {
+    const ipc = fakeIpcRenderer();
+    const api = createApi(ipc);
+    await api.getState();
+    await api.commands.startFraming(7);
+    await api.commands.retry();
+    expect(ipc.invoke.mock.calls).toEqual([
+      [channel('getState')],
+      [channel('startFraming'), 7],
+      [channel('retry')],
+    ]);
   });
 });

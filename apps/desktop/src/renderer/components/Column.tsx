@@ -1,16 +1,17 @@
 import type { CardView } from '@factory/orchestrator';
 import type { Api } from '../../shared/api';
 import { LABELS, QUEUE_LABELS, type QueueName } from '../labels';
-import { Card } from './Card';
+import { Card, type FocusRequest } from './Card';
 
 export interface ColumnProps {
   queue: QueueName;
   cards: readonly CardView[];
   api: Pick<Api, 'commands'>;
+  focus?: FocusRequest | undefined;
 }
 
 /** Une file de l'inbox, dans l'ordre exact reçu de l'orchestrateur : aucun tri ici (H1). */
-export function Column({ queue, cards, api }: ColumnProps) {
+export function Column({ queue, cards, api, focus }: ColumnProps) {
   const headingId = `column-${queue}`;
   return (
     <section aria-labelledby={headingId} className="flex min-w-0 flex-1 flex-col gap-3">
@@ -24,7 +25,7 @@ export function Column({ queue, cards, api }: ColumnProps) {
       {cards.length === 0 ? (
         <p className="text-sm text-neutral-400">{LABELS.empty}</p>
       ) : (
-        cards.map((card) => <Card key={card.id} card={card} api={api} />)
+        cards.map((card) => <Card key={card.id} card={card} api={api} focus={focus} />)
       )}
     </section>
   );

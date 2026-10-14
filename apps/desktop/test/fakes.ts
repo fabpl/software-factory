@@ -72,6 +72,9 @@ export function fakeOrchestrator(initial: InboxState = inboxState()): FakeOrches
 export interface FakeApi extends Api {
   publish(state: InboxState): void;
   listeners: Set<(state: InboxState) => void>;
+  /** Simule un message `factory:focus` venu du process principal. */
+  focus(cardId: string): void;
+  focusListeners: Set<(cardId: string) => void>;
   commands: { [K in keyof Commands]: ReturnType<typeof vi.fn<Commands[K]>> };
 }
 
@@ -79,17 +82,28 @@ export interface FakeApi extends Api {
 export function fakeApi(initial: InboxState = inboxState()): FakeApi {
   let state = initial;
   const listeners = new Set<(s: InboxState) => void>();
+  const focusListeners = new Set<(cardId: string) => void>();
   return {
     listeners,
+    focusListeners,
     publish(next) {
       state = next;
       for (const l of listeners) l(state);
+    },
+    focus(cardId) {
+      for (const l of focusListeners) l(cardId);
     },
     getState: () => Promise.resolve(state),
     subscribe(listener) {
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
+      };
+    },
+    onFocus(listener) {
+      focusListeners.add(listener);
+      return () => {
+        focusListeners.delete(listener);
       };
     },
     commands: {

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 import type { Api } from '../shared/api';
 import { BlockedScreen } from './components/BlockedScreen';
+import type { FocusRequest } from './components/Card';
 import { Column } from './components/Column';
 import { Sidebar } from './components/Sidebar';
 import { LABELS } from './labels';
@@ -14,11 +15,19 @@ import { LABELS } from './labels';
  */
 export function App({ api }: { api: Api }) {
   const [state, setState] = useState<InboxState | undefined>();
+  const [focus, setFocus] = useState<FocusRequest | undefined>();
 
   useEffect(() => {
     const unsubscribe = api.subscribe(setState);
+    // Clic sur une notification (H7) : une nouvelle requête à chaque message, même carte comprise.
+    const unfocus = api.onFocus((cardId) => {
+      setFocus((previous) => ({ cardId, seq: (previous?.seq ?? 0) + 1 }));
+    });
     void api.getState().then(setState);
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      unfocus();
+    };
   }, [api]);
 
   if (!state) {
@@ -39,9 +48,9 @@ export function App({ api }: { api: Api }) {
           />
         ) : (
           <main className="flex min-h-screen items-start gap-4 bg-neutral-50 p-4">
-            <Column queue="arbitrate" cards={state.arbitrate} api={api} />
-            <Column queue="validate" cards={state.validate} api={api} />
-            <Column queue="act" cards={state.act} api={api} />
+            <Column queue="arbitrate" cards={state.arbitrate} api={api} focus={focus} />
+            <Column queue="validate" cards={state.validate} api={api} focus={focus} />
+            <Column queue="act" cards={state.act} api={api} focus={focus} />
           </main>
         )}
       </div>
