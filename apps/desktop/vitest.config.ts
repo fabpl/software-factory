@@ -12,6 +12,7 @@ export default defineConfig({
         'src/main/home.ts',
         'src/main/ipc.ts',
         'src/main/lifecycle.ts',
+        'src/main/menu.ts',
         'src/main/notifications.ts',
         'src/main/paths.ts',
         'src/main/runtime.ts',
