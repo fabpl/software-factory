@@ -1,0 +1,41 @@
+{
+  "name": "desktop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Inbox Electron de la Software Factory (SPEC-inbox).",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --coverage",
+    "probe:sdk": "electron-vite build && electron out/main/probe.js",
+    "screenshot:blocked": "electron-vite build && electron out/main/screenshot.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.296",
+    "@factory/conventions": "workspace:*",
+    "@factory/orchestrator": "workspace:*",
+    "@octokit/plugin-throttling": "11.0.5",
+    "@octokit/request-error": "7.1.2",
+    "@octokit/rest": "22.0.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "simple-git": "4.0.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.8",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "electron": "44.7.2",
+    "electron-vite": "5.0.0",
+    "jsdom": "30.1.2",
+    "tailwindcss": "4.3.3",
+    "vite": "7.3.7"
+  }
+}

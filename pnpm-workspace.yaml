@@ -1,3 +1,7 @@
 packages:
   - packages/*
   - apps/*
+
+# Seul Electron a besoin de son script d'installation (téléchargement du binaire).
+onlyBuiltDependencies:
+  - electron
