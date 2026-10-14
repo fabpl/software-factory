@@ -149,7 +149,7 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Vérification : `pnpm --filter desktop test`.
 - Dépendances : T21. Taille : M. Fichiers : `src/renderer/components/{Column,Card,CardAnswer}.tsx`, `labels.ts`, `fixtures/`, tests.
 
-### T23 : Barre latérale
+### T23 : Barre latérale — fait (issue #8, PR #9, 14 octobre 2026)
 - Acceptation : dépôt, « Nouvelle intention », tâches par phase avec actions contextuelles et bouton grisé avec raison, `RunIndicator`, « Rafraîchir », « Annuler » avec confirmation.
 - Vérification : tests composants.
 - Dépendances : T22. Taille : M. Fichiers : `Sidebar.tsx`, `RunIndicator.tsx`, `NewIntentDialog.tsx`, tests.
