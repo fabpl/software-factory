@@ -46,6 +46,18 @@ export const LABELS = {
   sent: 'Envoyé, l’agent reprend',
   sendFailed: 'Échec de l’envoi',
   issue: (n: number) => `#${String(n)}`,
+  sidebar: 'Tâches',
+  refresh: 'Rafraîchir',
+  startFraming: 'Lancer le cadrage',
+  startImplementation: 'Lancer l’implémentation',
+  sendBackToFraming: 'Renvoyer en cadrage',
+  reason: 'Motif',
+  lockActive: 'Run en cours',
+  lockFailed: 'Run interrompu',
+  pr: (n: number) => `PR #${String(n)}`,
+  prDraft: 'brouillon',
+  prReady: 'prête',
+  prMerged: 'fusionnée',
 } as const;
 
 /** Phrase ajoutée au texte d'un désaveu quand la case est cochée (détectée par `shouldHaveBlocked`). */
