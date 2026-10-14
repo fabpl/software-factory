@@ -17,8 +17,8 @@ import {
   type HandlerContext,
 } from '../src/handlers.js';
 import { createWorktrees, type Worktree, type WorktreePort } from '../src/worktree.js';
-import { FakeGitHub } from './fakes/github.js';
-import { IDENTITY, tempRepo, type TempRepo } from './fakes/repo.js';
+import { FakeGitHub } from '../src/fake/github.js';
+import { IDENTITY, tempRepo, type TempRepo } from '../src/fake/repo.js';
 import { ARBITRATION, CONTRACT_FULL, DECISION, QUESTION } from './helpers.js';
 
 const CLOCK = (): Date => new Date('2026-10-13T10:00:00Z');

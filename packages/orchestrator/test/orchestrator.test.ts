@@ -21,8 +21,8 @@ import { Orchestrator, type OrchestratorOptions } from '../src/orchestrator.js';
 import { CARD_TITLES } from '../src/reconcile.js';
 import type { InboxState } from '../src/state.js';
 import { createWorktrees, type WorktreePort } from '../src/worktree.js';
-import { FakeGitHub } from './fakes/github.js';
-import { IDENTITY, tempRepo, type TempRepo } from './fakes/repo.js';
+import { FakeGitHub } from '../src/fake/github.js';
+import { IDENTITY, tempRepo, type TempRepo } from '../src/fake/repo.js';
 import { CONTRACT_FULL, QUESTION } from './helpers.js';
 
 /** Adaptateur programmable : une liste d'événements, ou une fonction qui voit le `RunSpec`. */

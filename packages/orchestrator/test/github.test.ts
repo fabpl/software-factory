@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ciStatusOf, findMarked, findPull, upsertMarked, type PullData } from '../src/github.js';
-import { FakeGitHub } from './fakes/github.js';
+import { FakeGitHub } from '../src/fake/github.js';
 
 const pull = (number: number, headRef: string, state: 'open' | 'closed'): PullData => ({
   number,

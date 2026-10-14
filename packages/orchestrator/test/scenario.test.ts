@@ -6,12 +6,12 @@ import { createLog } from '../src/log.js';
 import { Orchestrator } from '../src/orchestrator.js';
 import { CARD_TITLES } from '../src/reconcile.js';
 import { createWorktrees, type WorktreePort } from '../src/worktree.js';
-import { RoutedAdapter } from './fakes/adapter.js';
-import { FakeGitHub } from './fakes/github.js';
-import { IDENTITY, tempRepo, type TempRepo } from './fakes/repo.js';
+import { RoutedAdapter } from '../src/fake/adapter.js';
+import { FakeGitHub } from '../src/fake/github.js';
+import { IDENTITY, tempRepo, type TempRepo } from '../src/fake/repo.js';
 
 const scenarios = JSON.parse(
-  readFileSync(new URL('./fixtures/full-loop.json', import.meta.url), 'utf8'),
+  readFileSync(new URL('../src/fake/full-loop.json', import.meta.url), 'utf8'),
 ) as ConstructorParameters<typeof RoutedAdapter>[0];
 
 let clockMs = Date.parse('2026-10-13T10:00:00Z');
