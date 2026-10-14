@@ -9,12 +9,16 @@ import type {
   PullData,
   RepoRef,
 } from '../github.js';
+import type { CiRule } from './ci.js';
 
 /**
  * GitHub en mémoire : issues, commentaires, étiquettes, PR, runs Actions.
  * Chaque écriture est journalisée dans `writes` pour les assertions d'idempotence.
+ * Sans `ciRule`, la CI se lit dans `ciRuns` (vide par défaut) ; le mode `fake` branche la sienne.
  */
 export class FakeGitHub implements GitHubPort {
+  constructor(private readonly options: { ciRule?: CiRule } = {}) {}
+
   readonly ref: RepoRef = { owner: 'acme', repo: 'widget' };
   readonly issues = new Map<number, IssueData>();
   readonly comments = new Map<number, CommentData[]>();
@@ -113,7 +117,8 @@ export class FakeGitHub implements GitHubPort {
   }
 
   latestCiRun(sha: string): Promise<CiRun | undefined> {
-    return Promise.resolve(this.ciRuns.get(sha));
+    const rule = this.options.ciRule;
+    return Promise.resolve(rule ? rule(sha, this.pulls) : this.ciRuns.get(sha));
   }
 
   hasWorkflows(): Promise<boolean> {

@@ -19,6 +19,8 @@ export default defineConfig({
         'src/github.ts',
         'src/octokit.ts',
         'src/counter.ts',
+        'src/fake/ci.ts',
+        'src/fake/bootstrap.ts',
       ],
       thresholds: { branches: 100, functions: 100, lines: 100, statements: 100 },
     },
