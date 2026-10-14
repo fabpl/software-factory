@@ -36,4 +36,8 @@ Critère de succès 3 de SPEC-inbox. À rejouer sur un dépôt de test, avec une
 7. Relancer l'app et attendre le premier tick.
 8. Vérifier que la colonne Agir contient exactement une carte « Run interrompu, relancer ? » pour cette issue, et qu'aucune notification n'est apparue pour les cartes antérieures au lancement.
 
-Vérifié le : …
+Vérifié le : 14 octobre 2026, sur l'issue jetable #12 (run de cadrage lancé depuis la barre latérale, carte répondue depuis l'app pour relancer le run avant de quitter).
+
+- Étapes 3 et 4 : fenêtre fermée pendant le run, process vivant, run poursuivi jusqu'à sa carte ; fenêtre rouverte par « Ouvrir » dans le menu de l'icône. Si un gestionnaire d'icônes de barre de menus est installé, l'icône peut être rangée derrière son bouton « << ».
+- Étapes 5 et 6 : « Quitter » pendant le run : `run.failed` (`cancelled`) 4 s après le clic, process terminé environ 11 s après le clic (le reste est l'écriture GitHub du bloc de run, du verrou `run:failed` et de la carte Agir, faite avant de quitter). Sans run, « Quitter » prend encore environ 9 s : écart non expliqué, à suivre.
+- Étapes 7 et 8 : après relance, colonne Agir = exactement une carte « Run interrompu, relancer ? », badge de l'icône et du Dock = cartes en attente. Les notifications n'ont pas été observées pendant ce passage (écran verrouillé une partie du temps).

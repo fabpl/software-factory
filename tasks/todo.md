@@ -154,7 +154,7 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Vérification : tests composants.
 - Dépendances : T22. Taille : M. Fichiers : `Sidebar.tsx`, `RunIndicator.tsx`, `NewIntentDialog.tsx`, tests.
 
-### T24 : Barre de menus et cycle de vie
+### T24 : Barre de menus et cycle de vie — fait (issue #10, PR #11, 14 octobre 2026)
 - Acceptation : fermeture = masquer ; icône barre de menus avec badge ; notifications sur carte bloquante, fin de run, `verdict` ; Quitter = `cancel` + attente ≤ 10 s.
 - Vérification : manuelle, scénario noté dans `apps/desktop/README.md`.
 - Dépendances : T21. Taille : S. Fichiers : `src/main/tray.ts`, `src/main/notifications.ts`, `src/main/index.ts`.
