@@ -27,6 +27,8 @@ describe('registerIpc (H4, C2)', () => {
     const { ipcMain } = await setup();
     const expected = [...ORCHESTRATOR_COMMANDS, 'retry', 'getState'].map(channel).sort();
     expect([...ipcMain.handlers.keys()].sort()).toEqual(expected);
+    expect(ORCHESTRATOR_COMMANDS).toContain('createIntent');
+    expect(ORCHESTRATOR_COMMANDS).toContain('cancelRun');
   });
 
   const answer = { cardId: 'card-1', choice: { kind: 'option' as const, letter: 'A' }, text: '' };
@@ -41,6 +43,8 @@ describe('registerIpc (H4, C2)', () => {
     ['markEvidenceReviewed', [20, 'C1', 'proven', 'vu']],
     ['markEvidenceReviewed', [20, 'C1', 'blocked']],
     ['refresh', []],
+    ['createIntent', ['Nouvelle idée', 'Texte libre']],
+    ['cancelRun', []],
   ];
   it.each(cases)('%s relaie les mêmes arguments à l’orchestrateur', async (name, args) => {
     const { orchestrator, invoke } = await setup();

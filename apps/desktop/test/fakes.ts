@@ -7,6 +7,7 @@ import type { Api, Commands, OrchestratorCommands } from '../src/shared/api';
 export function inboxState(overrides: Partial<InboxState> = {}): InboxState {
   return {
     status: 'ready',
+    repo: { slug: 'acme/widget', path: '/tmp/maison/repos/acme-widget' },
     validate: [],
     arbitrate: [],
     act: [],
@@ -63,6 +64,8 @@ export function fakeOrchestrator(initial: InboxState = inboxState()): FakeOrches
     markActionDone: vi.fn(() => Promise.resolve()),
     markEvidenceReviewed: vi.fn(() => Promise.resolve()),
     refresh: vi.fn(() => Promise.resolve()),
+    createIntent: vi.fn(() => Promise.resolve()),
+    cancelRun: vi.fn(() => Promise.resolve()),
   };
 }
 
@@ -98,6 +101,8 @@ export function fakeApi(initial: InboxState = inboxState()): FakeApi {
       markActionDone: vi.fn(() => Promise.resolve()),
       markEvidenceReviewed: vi.fn(() => Promise.resolve()),
       refresh: vi.fn(() => Promise.resolve()),
+      createIntent: vi.fn(() => Promise.resolve()),
+      cancelRun: vi.fn(() => Promise.resolve()),
       retry: vi.fn(() => Promise.resolve()),
     },
   };

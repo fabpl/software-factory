@@ -79,6 +79,7 @@ export interface GitHubPort {
   /** Fichier sur une branche, relu sans cache ; absent = `undefined`. */
   readFile(path: string, branch: string): Promise<FileData | undefined>;
 
+  createIssue(title: string, body: string, labels: readonly string[]): Promise<IssueData>;
   setLabels(number: number, labels: readonly string[]): Promise<void>;
   setAssignees(number: number, logins: readonly string[]): Promise<void>;
   createComment(number: number, body: string): Promise<CommentData>;

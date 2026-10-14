@@ -158,7 +158,13 @@ describe('scénario complet : intention → framing → implementation → evide
     expect(state.validate.map((c) => c.id)).toEqual(['1:H2', '1:D1', '1:C1', '1:C2']);
     expect(state.tasks[0]).toMatchObject({
       phase: 'framing',
-      contractComplete: false,
+      startBlockers: [
+        { kind: 'item-not-settled', id: 'H2', status: 'pending' },
+        { kind: 'item-not-settled', id: 'D1', status: 'pending' },
+        { kind: 'item-not-settled', id: 'C1', status: 'pending' },
+        { kind: 'item-not-settled', id: 'C2', status: 'pending' },
+        { kind: 'no-validated-criterion' },
+      ],
       openCards: 0,
     });
     await b.tick();
@@ -172,7 +178,7 @@ describe('scénario complet : intention → framing → implementation → evide
     await b.validateItem(1, 'C2', 'validated');
     expect(github.bodyOf(1)).toContain('version=7');
     expect(b.getState().validate).toEqual([]);
-    expect(b.getState().tasks[0]?.contractComplete).toBe(true);
+    expect(b.getState().tasks[0]?.startBlockers).toEqual([]);
 
     await b.startImplementation(1);
     await b.waitForRun();

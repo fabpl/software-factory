@@ -187,6 +187,13 @@ const server = setupServer(
       { status: 201 },
     );
   }),
+  http.post(`${R}/issues`, async ({ request }) => {
+    const body = (await record(request)).body as { title: string; body: string; labels: string[] };
+    return HttpResponse.json(
+      { ...issue(12, body.labels), title: body.title, body: body.body, assignees: [] },
+      { status: 201 },
+    );
+  }),
   http.post(`${R}/labels`, async ({ request }) =>
     HttpResponse.json((await record(request)).body ?? {}, { status: 201 }),
   ),
@@ -331,6 +338,19 @@ describe('octokit — écritures', () => {
     expect(hits.at(-1)).toMatchObject({ body: { draft: true, head: 'factory/1-x' } });
     await github.markPullReady(9);
     expect(hits.at(-1)).toMatchObject({ path: '/graphql', body: { variables: { id: 'N9' } } });
+    expect(await github.createIssue('Titre', 'Texte libre', ['phase:intent'])).toMatchObject({
+      number: 12,
+      title: 'Titre',
+      body: 'Texte libre',
+      labels: ['phase:intent'],
+      state: 'open',
+      assignees: [],
+    });
+    expect(hits.at(-1)).toMatchObject({
+      method: 'POST',
+      path: '/repos/acme/widget/issues',
+      body: { title: 'Titre', body: 'Texte libre', labels: ['phase:intent'] },
+    });
   });
 
   it('fichier : lecture avec sha (jamais en cache), absent, erreur', async () => {

@@ -1,5 +1,6 @@
 import {
   attachAnswers,
+  canStartImplementation,
   cardNumber,
   findDelimitedBlock,
   parseAnswer,
@@ -21,6 +22,7 @@ import {
   type Phase,
   type Reversibility,
   type RunBlock,
+  type StartBlocker,
 } from '@factory/conventions';
 import type { FactoryEvent } from '@factory/agent-adapter';
 import {
@@ -258,7 +260,8 @@ export interface TaskView {
   phase: Phase;
   needs: Need[];
   lock?: { active: boolean; failed: boolean; assignee?: string };
-  contractComplete: boolean;
+  /** Raisons qui empêchent `startImplementation` (`canStartImplementation`) ; vide = lançable. */
+  startBlockers: StartBlocker[];
   openCards: number;
   pr?: { number: number; url: string; draft: boolean; merged: boolean; ci: CiStatus };
 }
@@ -268,10 +271,21 @@ export interface RunView {
   skill: string;
   startedAt: string;
   lastEvent: FactoryEvent;
+  /** Dernier `agent.tool` ou `agent.message` du run ; absent tant qu'il n'y en a pas. */
+  lastAgentEvent?: AgentEvent;
+}
+
+export type AgentEvent = Extract<FactoryEvent, { type: 'agent.tool' | 'agent.message' }>;
+
+/** Dépôt piloté : `owner/repo` et clone de la factory (`<userData>/repos/<owner>-<repo>`). */
+export interface RepoInfo {
+  slug: string;
+  path: string;
 }
 
 export interface InboxState {
   status: 'ready' | 'blocked';
+  repo: RepoInfo;
   blockedReason?: { message: string; command?: string };
   validate: CardView[];
   arbitrate: CardView[];
@@ -351,6 +365,11 @@ function evidenceViews(state: TaskState): CardView[] {
     });
 }
 
+function startBlockers(contract: Contract | undefined): StartBlocker[] {
+  const ready = canStartImplementation(contract ?? { version: 0, skill: '', items: [] });
+  return ready.ok ? [] : ready.error;
+}
+
 export function taskView(state: TaskState): TaskView {
   const view: TaskView = {
     issue: state.issue,
@@ -358,9 +377,7 @@ export function taskView(state: TaskState): TaskView {
     url: state.url,
     phase: state.phase,
     needs: [...state.needs],
-    contractComplete:
-      state.contract?.items.every((i) => i.status !== 'pending' && i.status !== 'discussing') ??
-      false,
+    startBlockers: startBlockers(state.contract),
     openCards: openCards(state).length,
   };
   if (state.lock) view.lock = state.lock;
@@ -380,6 +397,7 @@ export function buildInboxState(
   tasks: readonly TaskState[],
   extra: {
     run?: RunView;
+    repo: RepoInfo;
     lastSync: Date;
     errors?: string[];
     blocked?: { message: string; command?: string };
@@ -405,6 +423,7 @@ export function buildInboxState(
   }
   const inbox: InboxState = {
     status: extra.blocked ? 'blocked' : 'ready',
+    repo: extra.repo,
     validate,
     arbitrate,
     act,

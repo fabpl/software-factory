@@ -17,6 +17,7 @@ export default defineConfig({
         'src/renderer/App.tsx',
         'src/renderer/components/**/*.tsx',
         'src/renderer/labels.ts',
+        'src/renderer/send.ts',
         'src/shared/api.ts',
       ],
       thresholds: { branches: 100, functions: 100, lines: 100, statements: 100 },

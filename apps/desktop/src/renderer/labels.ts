@@ -1,5 +1,14 @@
-import type { CardOrigin, Reversibility } from '@factory/conventions';
-import type { CardView } from '@factory/orchestrator';
+import type {
+  CardOrigin,
+  ItemStatus,
+  Need,
+  Phase,
+  Reversibility,
+  StartBlocker,
+} from '@factory/conventions';
+import type { CardView, RunView, TaskView } from '@factory/orchestrator';
+
+type TaskPrView = NonNullable<TaskView['pr']>;
 
 /**
  * Libellés de l'écran (SPEC-inbox, « Langue et libellés ») : tout jeton machine affiché passe par
@@ -37,6 +46,30 @@ export const LABELS = {
   sent: 'Envoyé, l’agent reprend',
   sendFailed: 'Échec de l’envoi',
   issue: (n: number) => `#${String(n)}`,
+  sidebar: 'Tâches',
+  refresh: 'Rafraîchir',
+  startFraming: 'Lancer le cadrage',
+  startImplementation: 'Lancer l’implémentation',
+  sendBackToFraming: 'Renvoyer en cadrage',
+  reason: 'Motif',
+  lockActive: 'Run en cours',
+  lockFailed: 'Run interrompu',
+  pr: (n: number) => `PR #${String(n)}`,
+  prDraft: 'brouillon',
+  prReady: 'prête',
+  prMerged: 'fusionnée',
+  since: (duration: string) => `depuis ${duration}`,
+  cancelRun: 'Annuler le run',
+  cancelConfirmTitle: 'Annuler le run en cours ?',
+  cancelConfirmText:
+    'L’agent s’arrête ; une carte « Run interrompu » permettra de le relancer plus tard.',
+  cancelConfirm: 'Confirmer l’annulation',
+  cancelKeep: 'Laisser tourner',
+  newIntent: 'Nouvelle intention',
+  intentTitle: 'Titre',
+  intentBody: 'Texte',
+  createIssue: 'Créer l’issue',
+  close: 'Fermer',
 } as const;
 
 /** Phrase ajoutée au texte d'un désaveu quand la case est cochée (détectée par `shouldHaveBlocked`). */
@@ -68,6 +101,62 @@ export const ORIGIN_LABELS: Record<CardOrigin, string> = {
   framing: 'Cadrage',
   implementation: 'Implémentation',
 };
+
+export const PHASE_LABELS: Record<Phase, string> = {
+  intent: 'Intention',
+  framing: 'Cadrage',
+  implementation: 'Implémentation',
+  evidence: 'Preuves',
+  verdict: 'Verdict',
+};
+
+export const NEED_LABELS: Record<Need, string> = {
+  validation: 'À valider',
+  arbitration: 'À arbitrer',
+  action: 'À faire',
+};
+
+export const ITEM_STATUS_LABELS: Record<ItemStatus, string> = {
+  pending: 'à valider',
+  validated: 'validé',
+  rejected: 'rejeté',
+  discussing: 'à discuter',
+};
+
+export const CI_LABELS: Record<TaskPrView['ci']['kind'], string> = {
+  none: 'Pas de CI',
+  pending: 'CI en cours',
+  green: 'CI verte',
+  red: 'CI rouge',
+};
+
+export const EVENT_LABELS: Record<RunView['lastEvent']['type'], string> = {
+  'run.started': 'Run démarré',
+  'agent.message': 'Message de l’agent',
+  'agent.tool': 'Outil utilisé',
+  'card.emitted': 'Carte publiée',
+  'contract.updated': 'Contrat mis à jour',
+  'evidence.updated': 'Preuves mises à jour',
+  'adr.requested': 'ADR demandé',
+  'run.waiting': 'En attente d’une réponse',
+  'run.finished': 'Run terminé',
+  'run.failed': 'Run en échec',
+};
+
+/** Raison pour laquelle « Lancer l'implémentation » est grisé. */
+export function formatStartBlocker(blocker: StartBlocker): string {
+  return blocker.kind === 'item-not-settled'
+    ? `${blocker.id} ${ITEM_STATUS_LABELS[blocker.status]}`
+    : 'Aucun critère validé';
+}
+
+/** Durée écoulée : « moins d'une minute », « 20 min », « 2 h 05 min ». */
+export function formatDuration(startedAt: string, now: number): string {
+  const minutes = Math.floor((now - Date.parse(startedAt)) / 60_000);
+  if (minutes < 1) return 'moins d’une minute';
+  if (minutes < 60) return `${String(minutes)} min`;
+  return `${String(Math.floor(minutes / 60))} h ${String(minutes % 60).padStart(2, '0')} min`;
+}
 
 const SKILL_LABELS: Readonly<Record<string, string>> = {
   framing: 'Cadrage',

@@ -1,7 +1,8 @@
 import type { CardView, InboxState } from '@factory/orchestrator';
 
 /**
- * Une carte de chaque type, un item `pending`, une preuve à examiner et un run en cours : la
+ * Une carte de chaque type, un item `pending`, une preuve à examiner, une tâche par phase et un
+ * run en cours : la
  * fixture des tests de composants et des captures (H5), jamais le vrai dépôt.
  */
 
@@ -114,6 +115,7 @@ export const ACTION: CardView = {
 
 export const LOADED: InboxState = {
   status: 'ready',
+  repo: { slug: 'acme/widget', path: '/Users/moi/.software-factory/repos/acme-widget' },
   arbitrate: [ARBITRATION, QUESTION],
   validate: [DECISION, ITEM, EVIDENCE],
   act: [ACTION],
@@ -125,7 +127,7 @@ export const LOADED: InboxState = {
       phase: 'implementation',
       needs: ['arbitration', 'validation', 'action'],
       lock: { active: true, failed: false, assignee: 'factory-bot' },
-      contractComplete: true,
+      startBlockers: [],
       openCards: 3,
       pr: {
         number: 43,
@@ -141,15 +143,73 @@ export const LOADED: InboxState = {
       url: 'https://github.test/acme/widget/issues/44',
       phase: 'framing',
       needs: ['arbitration', 'validation'],
-      contractComplete: false,
+      startBlockers: [
+        { kind: 'item-not-settled', id: 'H2', status: 'pending' },
+        { kind: 'item-not-settled', id: 'C3', status: 'discussing' },
+      ],
       openCards: 1,
+    },
+    {
+      issue: 46,
+      title: 'Exporter les preuves en PDF',
+      url: 'https://github.test/acme/widget/issues/46',
+      phase: 'intent',
+      needs: [],
+      startBlockers: [{ kind: 'no-validated-criterion' }],
+      openCards: 0,
+    },
+    {
+      issue: 38,
+      title: 'Journal des runs',
+      url: 'https://github.test/acme/widget/issues/38',
+      phase: 'evidence',
+      needs: [],
+      startBlockers: [],
+      openCards: 0,
+      pr: {
+        number: 39,
+        url: 'https://github.test/acme/widget/pull/39',
+        draft: false,
+        merged: false,
+        ci: { kind: 'green', url: 'https://github.test/acme/widget/actions/runs/2' },
+      },
+    },
+    {
+      issue: 36,
+      title: 'Compteur du README',
+      url: 'https://github.test/acme/widget/issues/36',
+      phase: 'verdict',
+      needs: [],
+      lock: { active: false, failed: true },
+      startBlockers: [],
+      openCards: 0,
+      pr: {
+        number: 37,
+        url: 'https://github.test/acme/widget/pull/37',
+        draft: false,
+        merged: true,
+        ci: { kind: 'red', url: 'https://github.test/acme/widget/actions/runs/3' },
+      },
     },
   ],
   run: {
     issue: 42,
     skill: 'implementation@0.1.0',
     startedAt: '2026-10-14T09:40:00Z',
-    lastEvent: { type: 'agent.message', runId: 'run-1', text: 'Tranche 2 : colonnes.' },
+    lastEvent: {
+      type: 'agent.tool',
+      runId: 'run-1',
+      tool: 'Edit',
+      summary: 'Colonne.tsx : tranche 2, colonnes',
+      ok: true,
+    },
+    lastAgentEvent: {
+      type: 'agent.tool',
+      runId: 'run-1',
+      tool: 'Edit',
+      summary: 'Colonne.tsx : tranche 2, colonnes',
+      ok: true,
+    },
   },
   lastSync: new Date('2026-10-14T10:00:00Z'),
   errors: [],
