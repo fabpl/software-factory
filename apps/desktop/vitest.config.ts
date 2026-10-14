@@ -11,6 +11,7 @@ export default defineConfig({
       include: [
         'src/main/home.ts',
         'src/main/ipc.ts',
+        'src/main/lifecycle.ts',
         'src/main/notifications.ts',
         'src/main/paths.ts',
         'src/main/runtime.ts',
