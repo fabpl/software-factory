@@ -144,7 +144,7 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Vérification : `pnpm --filter desktop dev` affiche l'écran `blocked` quand `gh` n'est pas connecté.
 - Dépendances : T20. Taille : M. Fichiers : `src/main/index.ts`, `src/main/ipc.ts`, `src/preload/index.ts`, `src/renderer/App.tsx`, `electron.vite.config.ts`.
 
-### T22 : Colonnes et cartes
+### T22 : Colonnes et cartes — fait (issue #6, PR #7, 14 octobre 2026)
 - Acceptation : `Column`, `Card`, `CardAnswer` pour les 6 types de réponse ; raccourcis A/B/C ; `labels.ts` ; tests composants sur fixtures `InboxState` (vide, chargé, bloqué) ; aucun jeton anglais visible.
 - Vérification : `pnpm --filter desktop test`.
 - Dépendances : T21. Taille : M. Fichiers : `src/renderer/components/{Column,Card,CardAnswer}.tsx`, `labels.ts`, `fixtures/`, tests.
