@@ -558,6 +558,7 @@ export class Orchestrator {
         number: target,
         commentId: comment.id,
         url: comment.url,
+        createdAt: comment.createdAt,
       },
     });
     await this.patchLabels(task.issue, { addNeed: 'action' });

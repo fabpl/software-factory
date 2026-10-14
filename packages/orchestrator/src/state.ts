@@ -38,6 +38,7 @@ export interface CommentLocation {
   number: number;
   commentId: number;
   url: string;
+  createdAt: string;
 }
 
 export interface TaskCard {
@@ -56,6 +57,7 @@ export interface TaskPull {
   url: string;
   evidence?: Evidence;
   evidenceCommentId?: number;
+  evidenceComment?: { url: string; createdAt: string };
   ci: CiStatus;
 }
 
@@ -108,11 +110,14 @@ function collect(comments: readonly CommentData[], place: 'issue' | 'pr', number
   const cards: TaskCard[] = [];
   const answers: CardAnswer[] = [];
   const runs: RunBlock[] = [];
-  let evidence: { value: Evidence; commentId: number } | undefined;
+  let evidence: { value: Evidence; comment: CommentData } | undefined;
   for (const c of comments) {
     const card = parseCard(c.body);
     if (card.ok) {
-      cards.push({ card: card.value, location: { place, number, commentId: c.id, url: c.url } });
+      cards.push({
+        card: card.value,
+        location: { place, number, commentId: c.id, url: c.url, createdAt: c.createdAt },
+      });
       continue;
     }
     const answer = parseAnswer(c.body);
@@ -126,7 +131,7 @@ function collect(comments: readonly CommentData[], place: 'issue' | 'pr', number
       continue;
     }
     const ev = parseEvidence(c.body);
-    if (ev.ok) evidence = { value: ev.value, commentId: c.id };
+    if (ev.ok) evidence = { value: ev.value, comment: c };
   }
   return { cards, answers, runs, evidence };
 }
@@ -202,8 +207,10 @@ export function buildTaskState(
       ci: ciStatusOf(pull.ci),
     };
     if (pull.parsed.evidence) {
-      state.pr.evidence = pull.parsed.evidence.value;
-      state.pr.evidenceCommentId = pull.parsed.evidence.commentId;
+      const { value, comment } = pull.parsed.evidence;
+      state.pr.evidence = value;
+      state.pr.evidenceCommentId = comment.id;
+      state.pr.evidenceComment = { url: comment.url, createdAt: comment.createdAt };
     }
   }
   return { ok: true, value: state };
@@ -226,7 +233,7 @@ export interface CardView {
   id: string;
   issue: number;
   issueTitle: string;
-  kind: CardKind | 'item';
+  kind: CardKind | 'item' | 'evidence';
   title: string;
   context: string;
   options: CardOption[];
@@ -236,8 +243,12 @@ export interface CardView {
   origin?: 'framing' | 'implementation';
   skill?: string;
   url?: string;
+  /** Date ISO du commentaire source (carte ou preuves) ; absente pour un item de contrat. */
+  createdAt?: string;
   /** Item de contrat `pending` (file Valider). */
   item?: ContractItem;
+  /** Critère `to-review` de la preuve d'une PR ouverte (file Valider). */
+  evidence?: { pr: number; criterion: string; artifactUrl?: string };
 }
 
 export interface TaskView {
@@ -285,6 +296,7 @@ function cardView(state: TaskState, c: TaskCard): CardView {
     origin: c.card.origin,
     skill: c.card.skill,
     url: c.location.url,
+    createdAt: c.location.createdAt,
   };
   if (c.card.recommendation) view.recommendation = c.card.recommendation;
   if (c.card.changeCost !== undefined) view.changeCost = c.card.changeCost;
@@ -303,6 +315,40 @@ function itemView(state: TaskState, item: ContractItem): CardView {
     url: state.url,
     item,
   };
+}
+
+const ARTIFACT_URL_RE = /\]\((https?:\/\/[^)\s]+)\)/;
+
+/** Une vue par critère `to-review` de la preuve d'une PR ouverte (D2). */
+function evidenceViews(state: TaskState): CardView[] {
+  const pr = state.pr;
+  if (!pr?.open || !pr.evidence) return [];
+  return pr.evidence.lines
+    .filter((line) => line.state === 'to-review')
+    .map((line) => {
+      const text = state.contract?.items.find((i) => i.id === line.criterion)?.text;
+      const evidence: NonNullable<CardView['evidence']> = {
+        pr: pr.number,
+        criterion: line.criterion,
+      };
+      const artifactUrl = ARTIFACT_URL_RE.exec(line.proof)?.[1];
+      if (artifactUrl !== undefined) evidence.artifactUrl = artifactUrl;
+      const view: CardView = {
+        id: `${String(pr.number)}:${line.criterion}`,
+        issue: state.issue,
+        issueTitle: state.title,
+        kind: 'evidence',
+        title: text !== undefined ? `${line.criterion} — ${text}` : line.criterion,
+        context: line.proof,
+        options: [],
+        evidence,
+      };
+      if (pr.evidenceComment) {
+        view.url = pr.evidenceComment.url;
+        view.createdAt = pr.evidenceComment.createdAt;
+      }
+      return view;
+    });
 }
 
 export function taskView(state: TaskState): TaskView {
@@ -355,6 +401,7 @@ export function buildInboxState(
         if (item.status === 'pending') validate.push(itemView(state, item));
       }
     }
+    validate.push(...evidenceViews(state));
   }
   const inbox: InboxState = {
     status: extra.blocked ? 'blocked' : 'ready',
