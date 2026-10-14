@@ -1,6 +1,7 @@
 import type { AnswerChoice } from '@factory/conventions';
 import type { CardView } from '@factory/orchestrator';
-import { useId, useState } from 'react';
+import { useId, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from 'react';
+import { toast } from 'sonner';
 import type { Commands } from '../../shared/api';
 import { LABELS, SHOULD_HAVE_BLOCKED_TEXT } from '../labels';
 
@@ -115,17 +116,68 @@ export interface CardAnswerProps {
   commands: AnswerCommands;
 }
 
-/** Zone de réponse d'une carte dépliée (SPEC-inbox, « Carte dépliée »). */
-export function CardAnswer({ card, commands }: CardAnswerProps) {
+/** Ce que la carte transmet à sa zone de réponse : les touches pressées n'importe où dans l'article. */
+export interface KeyHandler {
+  onKeyDown(event: KeyboardEvent<HTMLElement>): void;
+}
+
+/**
+ * Zone de réponse d'une carte dépliée (SPEC-inbox, « Carte dépliée »). Raccourcis (D4) : la lettre
+ * d'un bouton le sélectionne (surlignage et focus) sans rien envoyer, Entrée envoie la sélection ;
+ * ignorés dans un champ de saisie. Un envoi réussi affiche un toast et fige la zone : la carte
+ * quitte sa colonne au prochain `InboxState`, sans retrait optimiste (H1).
+ */
+export function CardAnswer({ card, commands, ref }: CardAnswerProps & { ref?: Ref<KeyHandler> }) {
   const [note, setNote] = useState('');
   const [shouldHaveBlocked, setShouldHaveBlocked] = useState(false);
+  const [selected, setSelected] = useState<number | undefined>();
+  const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const noteId = useId();
   const buttons = answerButtons(card);
   const trimmed = note.trim();
 
-  function submit(button: AnswerButton): void {
-    void button.send(commands, { note: trimmed, shouldHaveBlocked });
+  function disabled(button: AnswerButton): boolean {
+    return state !== 'idle' || (button.requiresNote && trimmed === '');
   }
+
+  async function submit(button: AnswerButton): Promise<void> {
+    setState('sending');
+    try {
+      await button.send(commands, { note: trimmed, shouldHaveBlocked });
+      setState('sent');
+      toast.success(LABELS.sent);
+    } catch (e) {
+      setState('idle');
+      toast.error(`${LABELS.sendFailed} : ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  useImperativeHandle(ref, () => ({
+    onKeyDown(event) {
+      // La note est le seul champ de saisie de la carte.
+      if (
+        event.target instanceof HTMLTextAreaElement ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      )
+        return;
+      if (event.key === 'Enter') {
+        if (selected === undefined) return;
+        event.preventDefault();
+        const button = buttons[selected];
+        if (button && !disabled(button)) void submit(button);
+        return;
+      }
+      if (event.key.length !== 1) return;
+      const index = event.key.toUpperCase().charCodeAt(0) - 65;
+      if (index < 0 || index >= buttons.length) return;
+      event.preventDefault();
+      setSelected(index);
+      buttonRefs.current[index]?.focus();
+    },
+  }));
 
   return (
     <div
@@ -161,12 +213,17 @@ export function CardAnswer({ card, commands }: CardAnswerProps) {
         {buttons.map((b, i) => (
           <button
             key={letterOf(i)}
+            ref={(el) => {
+              buttonRefs.current[i] = el;
+            }}
             type="button"
             aria-keyshortcuts={letterOf(i)}
-            disabled={b.requiresNote && trimmed === ''}
-            className="flex items-center gap-2 rounded border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100 disabled:opacity-40"
+            data-selected={selected === i}
+            disabled={disabled(b)}
+            className="flex items-center gap-2 rounded border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100 disabled:opacity-40 data-[selected=true]:border-neutral-900 data-[selected=true]:bg-neutral-100 data-[selected=true]:ring-2 data-[selected=true]:ring-neutral-900"
             onClick={() => {
-              submit(b);
+              setSelected(i);
+              void submit(b);
             }}
           >
             <kbd aria-hidden className="rounded bg-neutral-100 px-1 font-mono text-xs">

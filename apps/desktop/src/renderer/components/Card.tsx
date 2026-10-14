@@ -8,10 +8,10 @@ import {
   SquarePen,
   type LucideIcon,
 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import type { Api } from '../../shared/api';
 import { KIND_LABELS, LABELS, ORIGIN_LABELS, REVERSIBILITY_LABELS, formatAge } from '../labels';
-import { CardAnswer } from './CardAnswer';
+import { CardAnswer, type KeyHandler } from './CardAnswer';
 import { Markdown } from './Markdown';
 
 const KIND_ICONS: Record<CardView['kind'], LucideIcon> = {
@@ -31,12 +31,16 @@ export interface CardProps {
 /** Carte repliée : icône, type, titre, issue, réversibilité, âge ; un clic déplie (SPEC-inbox). */
 export function Card({ card, api }: CardProps) {
   const [open, setOpen] = useState(false);
+  const answer = useRef<KeyHandler>(null);
   const Icon = KIND_ICONS[card.kind];
   return (
     <article
       aria-expanded={open}
       aria-labelledby={`card-${card.id}-title`}
       className="rounded-lg border border-neutral-200 bg-white shadow-sm"
+      onKeyDown={(e) => {
+        answer.current?.onKeyDown(e);
+      }}
     >
       <button
         type="button"
@@ -69,7 +73,7 @@ export function Card({ card, api }: CardProps) {
         </h3>
       </button>
       {open && <CardBody card={card} />}
-      {open && <CardAnswer card={card} commands={api.commands} />}
+      {open && <CardAnswer ref={answer} card={card} commands={api.commands} />}
     </article>
   );
 }
