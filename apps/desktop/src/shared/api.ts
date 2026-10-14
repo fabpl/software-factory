@@ -21,6 +21,8 @@ export interface OrchestratorCommands {
     note?: string,
   ): Promise<void>;
   refresh(): Promise<void>;
+  createIntent(title: string, body: string): Promise<void>;
+  cancelRun(): Promise<void>;
 }
 
 export const ORCHESTRATOR_COMMANDS = [
@@ -32,6 +34,8 @@ export const ORCHESTRATOR_COMMANDS = [
   'markActionDone',
   'markEvidenceReviewed',
   'refresh',
+  'createIntent',
+  'cancelRun',
 ] as const satisfies readonly (keyof OrchestratorCommands)[];
 
 export interface Commands extends OrchestratorCommands {

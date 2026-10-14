@@ -64,6 +64,8 @@ export function fakeOrchestrator(initial: InboxState = inboxState()): FakeOrches
     markActionDone: vi.fn(() => Promise.resolve()),
     markEvidenceReviewed: vi.fn(() => Promise.resolve()),
     refresh: vi.fn(() => Promise.resolve()),
+    createIntent: vi.fn(() => Promise.resolve()),
+    cancelRun: vi.fn(() => Promise.resolve()),
   };
 }
 
@@ -99,6 +101,8 @@ export function fakeApi(initial: InboxState = inboxState()): FakeApi {
       markActionDone: vi.fn(() => Promise.resolve()),
       markEvidenceReviewed: vi.fn(() => Promise.resolve()),
       refresh: vi.fn(() => Promise.resolve()),
+      createIntent: vi.fn(() => Promise.resolve()),
+      cancelRun: vi.fn(() => Promise.resolve()),
       retry: vi.fn(() => Promise.resolve()),
     },
   };
