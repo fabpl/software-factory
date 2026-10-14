@@ -79,7 +79,7 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 - [x] Une issue réelle de ce dépôt (#2, PR #3 fusionnée le 13 octobre 2026) passe `intent → framing → implementation → evidence → verdict` via la CLI, sans édition manuelle hors cartes ; [x] redémarrage en plein run = une seule carte « Run interrompu » (scénario `full-loop`, deux redémarrages simulés) ; [x] tick sans changement = zéro appel comptabilisé (`pnpm --filter @factory/orchestrator live` le 13 octobre 2026 : seconde lecture 0 requête, 3 × 304)
 
 ### Phase 4 — `inbox`
-- [ ] T21 Squelette Electron : main, preload, renderer, pont IPC, écran `blocked`
+- [x] T21 Squelette Electron : main, preload, renderer, pont IPC, écran `blocked` — issue #4, PR #5 fusionnée le 14 octobre 2026 (dogfoodée via la CLI : 2 cartes de cadrage, 19 items, 8 preuves, 2 décisions gardées ; `query()` tourne dans le process principal Electron sans correctif)
 - [ ] T22 Colonnes et cartes avec zones de réponse, tests composants sur fixtures
 - [ ] T23 Barre latérale : dépôt, nouvelle intention, tâches par phase, run en cours
 - [ ] T24 Barre de menus, badge, notifications, fermeture et sortie propre

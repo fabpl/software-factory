@@ -139,7 +139,7 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 
 ## Phase 4 — `inbox` (`apps/desktop`)
 
-### T21 : Squelette Electron
+### T21 : Squelette Electron — fait (issue #4, PR #5, 14 octobre 2026)
 - Acceptation : electron-vite, main/preload/renderer, `contextIsolation`, pont IPC typé (`api.commands.*`, `api.subscribe`), écran `blocked` avec commande à copier ; vérification que `query()` du SDK fonctionne dans le process principal (sinon carte de décision).
 - Vérification : `pnpm --filter desktop dev` affiche l'écran `blocked` quand `gh` n'est pas connecté.
 - Dépendances : T20. Taille : M. Fichiers : `src/main/index.ts`, `src/main/ipc.ts`, `src/preload/index.ts`, `src/renderer/App.tsx`, `electron.vite.config.ts`.
