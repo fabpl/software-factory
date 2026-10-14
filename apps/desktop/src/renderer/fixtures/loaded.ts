@@ -114,6 +114,7 @@ export const ACTION: CardView = {
 
 export const LOADED: InboxState = {
   status: 'ready',
+  repo: { slug: 'acme/widget', path: '/Users/moi/.software-factory/repos/acme-widget' },
   arbitrate: [ARBITRATION, QUESTION],
   validate: [DECISION, ITEM, EVIDENCE],
   act: [ACTION],
@@ -125,7 +126,7 @@ export const LOADED: InboxState = {
       phase: 'implementation',
       needs: ['arbitration', 'validation', 'action'],
       lock: { active: true, failed: false, assignee: 'factory-bot' },
-      contractComplete: true,
+      startBlockers: [],
       openCards: 3,
       pr: {
         number: 43,
@@ -141,7 +142,7 @@ export const LOADED: InboxState = {
       url: 'https://github.test/acme/widget/issues/44',
       phase: 'framing',
       needs: ['arbitration', 'validation'],
-      contractComplete: false,
+      startBlockers: [{ kind: 'item-not-settled', id: 'H2', status: 'pending' }],
       openCards: 1,
     },
   ],

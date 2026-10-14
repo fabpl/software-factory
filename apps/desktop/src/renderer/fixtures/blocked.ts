@@ -7,6 +7,7 @@ export const BLOCKED: InboxState = {
     message: 'You are not logged into any GitHub hosts. To log in, run: gh auth login',
     command: 'gh auth login',
   },
+  repo: { slug: 'acme/widget', path: '/Users/moi/.software-factory/repos/acme-widget' },
   validate: [],
   arbitrate: [],
   act: [],

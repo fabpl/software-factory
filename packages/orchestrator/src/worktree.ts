@@ -16,6 +16,8 @@ export interface Worktree {
 
 export interface WorktreePort {
   readonly root: string;
+  /** `<root>/repos/<owner>-<repo>`, qu'il soit déjà cloné ou non. */
+  readonly clonePath: string;
   /** Clone principal `<root>/repos/<owner>-<repo>` : cloné s'il manque, sinon `fetch --prune`. */
   ensureClone(): Promise<string>;
   /** `<root>/worktrees/<owner>-<repo>/<issue>` sur `branch`, créée depuis `origin/<base>` si elle n'existe nulle part. */
@@ -125,6 +127,7 @@ export function createWorktrees(options: WorktreeOptions): WorktreePort {
 
   return {
     root: options.root,
+    clonePath,
     ensureClone,
     create,
     open,

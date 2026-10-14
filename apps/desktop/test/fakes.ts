@@ -7,6 +7,7 @@ import type { Api, Commands, OrchestratorCommands } from '../src/shared/api';
 export function inboxState(overrides: Partial<InboxState> = {}): InboxState {
   return {
     status: 'ready',
+    repo: { slug: 'acme/widget', path: '/tmp/maison/repos/acme-widget' },
     validate: [],
     arbitrate: [],
     act: [],

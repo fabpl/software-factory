@@ -19,6 +19,7 @@ import type { IssueData } from '../src/github.js';
 import { createLog } from '../src/log.js';
 import { Orchestrator, type OrchestratorOptions } from '../src/orchestrator.js';
 import { CARD_TITLES } from '../src/reconcile.js';
+import type { InboxState } from '../src/state.js';
 import { createWorktrees, type WorktreePort } from '../src/worktree.js';
 import { FakeGitHub } from './fakes/github.js';
 import { IDENTITY, tempRepo, type TempRepo } from './fakes/repo.js';
@@ -444,6 +445,94 @@ describe('orchestrator', () => {
     expect(github.writes.length).toBe(writes);
     await o.markEvidenceReviewed(50, 'C2', 'blocked');
     expect(read()[1]).toEqual({ criterion: 'C2', proof: '[x](https://x)', state: 'blocked' });
+  });
+
+  it('cancelRun : annule le run vivant sans arrêter le sondage ; sans run, ne fait rien', async () => {
+    let release: (() => void) | undefined;
+    const cancelled: string[] = [];
+    const adapter: AgentAdapter = {
+      id: 'fake',
+      start: async function* (spec) {
+        yield { type: 'run.started', runId: spec.runId, sessionId: 's', model: 'm', tools: [] };
+        await new Promise<void>((r) => (release = r));
+        yield {
+          type: 'run.failed',
+          runId: spec.runId,
+          sessionId: 's',
+          reason: 'cancelled',
+          detail: 'annulé',
+        };
+      },
+      resume: () => {
+        throw new Error('pas de reprise ici');
+      },
+      cancel: (runId) => {
+        cancelled.push(runId);
+        release?.();
+        return Promise.resolve();
+      },
+    };
+    const { github, options, issue } = setup({ adapter, tickIntervalMs: 20 });
+    github.addIssue({ number: issue, title: 'Annuler', labels: ['phase:framing'] });
+    const o = new Orchestrator(options);
+    await o.cancelRun();
+    expect(cancelled).toEqual([]);
+    o.start();
+    for (let i = 0; i < 200 && !o.getState().run; i += 1)
+      await new Promise((r) => setTimeout(r, 25));
+    await o.cancelRun();
+    expect(cancelled).toEqual([`run-${String(issue)}`]);
+    await o.waitForRun();
+    expect(o.getState().run).toBeUndefined();
+    expect(github.issues.get(issue)?.labels).toEqual([
+      'phase:framing',
+      'needs:action',
+      'run:failed',
+    ]);
+    const syncs: Date[] = [];
+    o.subscribe((s) => syncs.push(s.lastSync));
+    for (let i = 0; i < 200 && syncs.length < 3; i += 1)
+      await new Promise((r) => setTimeout(r, 25));
+    expect(syncs.length).toBeGreaterThanOrEqual(3);
+    await o.stop();
+    const cards = github
+      .commentsOf(issue)
+      .map((c) => parseCard(c.body))
+      .flatMap((r) => (r.ok ? [r.value] : []));
+    expect(cards).toMatchObject([{ title: CARD_TITLES.runInterrupted, status: 'open' }]);
+    expect(cancelled).toHaveLength(1);
+  });
+
+  it('état publié : dépôt (slug et clone), dernier événement d’agent conservé après un événement non-agent', async () => {
+    let release: (() => void) | undefined;
+    const adapter = adapterOf(async function* (spec) {
+      yield { type: 'run.started', runId: spec.runId, sessionId: 's', model: 'm', tools: [] };
+      yield { type: 'agent.message', runId: spec.runId, text: 'Je lis le contrat.' };
+      yield { type: 'agent.tool', runId: spec.runId, tool: 'Read', summary: 'state.ts', ok: true };
+      yield { type: 'card.emitted', runId: spec.runId, card: QUESTION, blocking: false };
+      await new Promise<void>((r) => (release = r));
+      yield { type: 'run.finished', runId: spec.runId, sessionId: 's', turns: 1, costUsd: 0 };
+    });
+    const { github, options, issue } = setup({ adapter });
+    github.addIssue({ number: issue, title: 'Agent', labels: ['phase:framing'] });
+    const o = new Orchestrator(options);
+    expect(o.getState().repo).toEqual({
+      slug: 'acme/widget',
+      path: join(repo.userData, 'repos', 'acme-widget'),
+    });
+    const runs: (InboxState['run'] | undefined)[] = [];
+    o.subscribe((s) => runs.push(s.run));
+    await o.tick();
+    for (let i = 0; i < 200 && !release; i += 1) await new Promise((r) => setTimeout(r, 10));
+    const seen = runs.filter((r) => r !== undefined);
+    expect(seen[0]?.lastAgentEvent).toBeUndefined();
+    expect(o.getState().run).toMatchObject({
+      lastEvent: { type: 'card.emitted' },
+      lastAgentEvent: { type: 'agent.tool', tool: 'Read', summary: 'state.ts' },
+    });
+    expect(seen.some((r) => r.lastAgentEvent?.type === 'agent.message')).toBe(true);
+    release?.();
+    await o.waitForRun();
   });
 
   it('start sans intervalle explicite, puis stop sans run', async () => {

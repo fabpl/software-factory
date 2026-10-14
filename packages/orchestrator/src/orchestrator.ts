@@ -55,7 +55,9 @@ import {
   nextCardId,
   openCards,
   skillForPhase,
+  type AgentEvent,
   type InboxState,
+  type RepoInfo,
   type RunView,
   type TaskState,
 } from './state.js';
@@ -97,6 +99,7 @@ interface LiveRun {
   skill: SkillName;
   startedAt: string;
   lastEvent: FactoryEvent;
+  lastAgentEvent?: AgentEvent;
   done: Promise<void>;
 }
 
@@ -130,8 +133,14 @@ export class Orchestrator {
       });
     this.state = buildInboxState([], {
       lastSync: this.clock(),
+      repo: this.repo(),
       ...(blocked ? { blocked } : {}),
     });
+  }
+
+  private repo(): RepoInfo {
+    const { github, worktrees } = this.options;
+    return { slug: `${github.ref.owner}/${github.ref.repo}`, path: worktrees.clonePath };
   }
 
   /** Orchestrateur qui ne démarre pas : prérequis manquant, commande à afficher dans la file Agir. */
@@ -151,10 +160,18 @@ export class Orchestrator {
   async stop(): Promise<void> {
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
-    if (this.live) {
-      await this.options.adapter.cancel(this.live.runId);
-      await Promise.race([this.live.done, new Promise((r) => setTimeout(r, 10_000))]);
-    }
+    await this.cancelRun();
+  }
+
+  /**
+   * Annule le run vivant et attend son événement terminal (≤ 10 s) ; le sondage continue. La fin
+   * de run suit le chemin habituel : bloc de run, verrou `run:failed`, carte « Run interrompu ».
+   */
+  async cancelRun(): Promise<void> {
+    const live = this.live;
+    if (!live) return;
+    await this.options.adapter.cancel(live.runId);
+    await Promise.race([live.done, new Promise((r) => setTimeout(r, 10_000))]);
   }
 
   /** Attend la fin du run en cours et du tick qui le suit (pilotage en ligne de commande). */
@@ -421,6 +438,7 @@ export class Orchestrator {
   private publish(errors: string[] = this.state.errors): void {
     this.state = buildInboxState(this.tasks, {
       lastSync: this.clock(),
+      repo: this.state.repo,
       errors,
       ...(this.live ? { run: this.runView(this.live) } : {}),
     });
@@ -428,12 +446,14 @@ export class Orchestrator {
   }
 
   private runView(live: LiveRun): RunView {
-    return {
+    const view: RunView = {
       issue: live.issue,
       skill: live.skill,
       startedAt: live.startedAt,
       lastEvent: live.lastEvent,
     };
+    if (live.lastAgentEvent) view.lastAgentEvent = live.lastAgentEvent;
+    return view;
   }
 
   // -- exécution des actions ----------------------------------------------------
@@ -692,6 +712,8 @@ export class Orchestrator {
       for await (const event of events) {
         log.write(task.issue, { kind: 'event', event });
         live.lastEvent = event;
+        if (event.type === 'agent.tool' || event.type === 'agent.message')
+          live.lastAgentEvent = event;
         this.publish();
         if (
           event.type === 'run.waiting' ||

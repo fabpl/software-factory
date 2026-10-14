@@ -22,6 +22,7 @@ const issue = (labels: string[], extra: Partial<TaskInput['issue']> = {}): TaskI
 });
 
 const AT = '2026-10-14T10:00:00Z';
+const REPO = { slug: 'acme/widget', path: '/maison/repos/acme-widget' };
 
 const CARD = (id: string, kind: string, origin: string, status = 'open'): string =>
   `<!-- factory:card id=${id} kind=${kind} origin=${origin} reversibility=reversible status=${status} skill=framing@0.1.0 -->\n### ❓ Q — Titre ${id}\n\n**Contexte** — x\n\n**Options**\n- **A.** a\n- **B.** b\n`;
@@ -259,7 +260,13 @@ describe('state — vues inbox', () => {
       lastEvent: { type: 'agent.message' as const, runId: 'r', text: 'hi' },
     };
     const closed = task({ issue: 4, closed: true, cards: impl.cards });
-    const inbox = buildInboxState([framing, impl, closed], { lastSync, run, errors: ['e'] });
+    const inbox = buildInboxState([framing, impl, closed], {
+      lastSync,
+      run,
+      repo: REPO,
+      errors: ['e'],
+    });
+    expect(inbox.repo).toEqual(REPO);
     expect(inbox.tasks.map((t) => t.issue)).toEqual([1, 2]);
     expect(inbox.status).toBe('ready');
     expect(inbox.validate.map((c) => c.id)).toEqual(['1:H1', '1:C1', 'card-1']);
@@ -289,15 +296,25 @@ describe('state — vues inbox', () => {
       phase: 'implementation',
       needs: ['validation', 'action', 'arbitration'],
       lock: { active: true, failed: false },
-      contractComplete: true,
+      startBlockers: [],
       openCards: 3,
       pr: { number: 9, url: 'p', draft: true, merged: false, ci: { kind: 'none' } },
     });
-    expect(taskView(framing)).toMatchObject({ contractComplete: false, openCards: 0 });
-    expect(taskView(task({ issue: 3 })).contractComplete).toBe(false);
+    expect(taskView(framing)).toMatchObject({
+      startBlockers: [
+        { kind: 'item-not-settled', id: 'H1', status: 'pending' },
+        { kind: 'item-not-settled', id: 'C1', status: 'pending' },
+        { kind: 'no-validated-criterion' },
+      ],
+      openCards: 0,
+    });
+    expect(taskView(task({ issue: 3 })).startBlockers).toEqual([
+      { kind: 'no-validated-criterion' },
+    ]);
 
     const blocked = buildInboxState([], {
       lastSync,
+      repo: REPO,
       blocked: { message: 'gh', command: 'gh auth login' },
     });
     expect(blocked).toMatchObject({
@@ -363,7 +380,7 @@ describe('state — preuves à revoir et dates (C6)', () => {
   }
 
   it('une CardView evidence par critère to-review, publiée dans Valider après les items', () => {
-    const inbox = buildInboxState([implTask()], { lastSync: new Date() });
+    const inbox = buildInboxState([implTask()], { lastSync: new Date(), repo: REPO });
     const evidences = inbox.validate.filter((c) => c.kind === 'evidence');
     expect(evidences.map((c) => c.evidence?.criterion)).toEqual(['C1', 'C5']);
     expect(inbox.validate.map((c) => c.id)).toEqual(['card-2', '20:C1', '20:C5']);
@@ -384,35 +401,35 @@ describe('state — preuves à revoir et dates (C6)', () => {
   });
 
   it('critère absent du contrat (ou pas de contrat) : l’identifiant seul sert de titre', () => {
-    const inbox = buildInboxState([implTask()], { lastSync: new Date() });
+    const inbox = buildInboxState([implTask()], { lastSync: new Date(), repo: REPO });
     expect(inbox.validate.find((c) => c.id === '20:C5')?.title).toBe('C5');
     const t = implTask();
     delete t.contract;
-    const bare = buildInboxState([t], { lastSync: new Date() });
+    const bare = buildInboxState([t], { lastSync: new Date(), repo: REPO });
     expect(bare.validate.find((c) => c.id === '20:C1')?.title).toBe('C1');
   });
 
   it('preuves sans commentaire source connu : ni url ni createdAt', () => {
     const t = implTask();
     if (t.pr) delete t.pr.evidenceComment;
-    const inbox = buildInboxState([t], { lastSync: new Date() });
+    const inbox = buildInboxState([t], { lastSync: new Date(), repo: REPO });
     const view = inbox.validate.find((c) => c.id === '20:C1');
     expect(view?.url).toBeUndefined();
     expect(view?.createdAt).toBeUndefined();
   });
 
   it('aucune CardView evidence pour proven / blocked / pending, ni pour une PR fermée', () => {
-    const open = buildInboxState([implTask()], { lastSync: new Date() });
+    const open = buildInboxState([implTask()], { lastSync: new Date(), repo: REPO });
     const criteria = open.validate.flatMap((c) => (c.evidence ? [c.evidence.criterion] : []));
     expect(criteria).not.toContain('C2');
     expect(criteria).not.toContain('C3');
     expect(criteria).not.toContain('C4');
-    const closed = buildInboxState([implTask('closed')], { lastSync: new Date() });
+    const closed = buildInboxState([implTask('closed')], { lastSync: new Date(), repo: REPO });
     expect(closed.validate.filter((c) => c.kind === 'evidence')).toEqual([]);
   });
 
   it('chaque CardView de carte porte le createdAt de son commentaire', () => {
-    const inbox = buildInboxState([implTask()], { lastSync: new Date() });
+    const inbox = buildInboxState([implTask()], { lastSync: new Date(), repo: REPO });
     expect(inbox.arbitrate[0]).toMatchObject({ id: 'card-1', createdAt: '2026-10-14T09:00:00Z' });
     expect(inbox.validate[0]).toMatchObject({ id: 'card-2', createdAt: '2026-10-14T09:30:00Z' });
   });
