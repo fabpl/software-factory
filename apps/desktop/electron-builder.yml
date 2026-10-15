@@ -1,0 +1,24 @@
+# Paquet macOS de l'inbox (H2) : arm64, non signé, non notarisé, icône Electron par défaut.
+appId: software-factory
+productName: Software Factory
+directories:
+  output: dist
+# Les dépendances natives sont déjà construites pour Electron par `pnpm install`.
+npmRebuild: false
+files:
+  - out/**
+  - package.json
+  # `@factory/*` est du TypeScript bundlé dans `out/` par electron-vite.
+  - '!node_modules/@factory/**'
+# Le SDK lance son binaire `claude` en sous-processus : il doit rester un vrai fichier exécutable.
+asarUnpack:
+  - node_modules/@anthropic-ai/claude-agent-sdk*/**
+# `defaultSkillsDir()` remonte depuis `app.asar/out/main/` et trouve `Contents/Resources/skills` (H4).
+extraResources:
+  - from: ../../skills
+    to: skills
+mac:
+  target:
+    - target: dmg
+      arch: arm64
+  identity: null

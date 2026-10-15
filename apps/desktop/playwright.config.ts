@@ -3,6 +3,8 @@ import { defineConfig } from '@playwright/test';
 /** E2E de l'app construite en mode `fake` (H1) : une seule app Electron à la fois. */
 export default defineConfig({
   testDir: 'e2e',
+  // L'app empaquetée a sa propre configuration (`playwright.packaged.config.ts`, C7).
+  testIgnore: 'packaged.spec.ts',
   outputDir: 'test-results',
   workers: 1,
   timeout: 120_000,
