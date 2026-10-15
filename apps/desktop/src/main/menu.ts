@@ -33,6 +33,7 @@ export function appMenuTemplate(actions: MenuActions): MenuItemConstructorOption
   return [
     {
       role: 'appMenu',
+      label: productName,
       submenu: [
         { role: 'about', label: `À propos de ${productName}` },
         { type: 'separator' },
@@ -43,7 +44,19 @@ export function appMenuTemplate(actions: MenuActions): MenuItemConstructorOption
         { label: MENU_LABELS.quit, accelerator: 'CmdOrCtrl+Q', click: actions.quit },
       ],
     },
-    { role: 'editMenu' },
+    // Sans sous-menu explicite, un rôle de menu garde les libellés anglais d'Electron.
+    {
+      role: 'editMenu',
+      label: 'Édition',
+      submenu: [
+        { role: 'undo', label: 'Annuler' },
+        { role: 'redo', label: 'Rétablir' },
+        { role: 'cut', label: 'Couper' },
+        { role: 'copy', label: 'Copier' },
+        { role: 'paste', label: 'Coller' },
+        { role: 'selectAll', label: 'Tout sélectionner' },
+      ],
+    },
     {
       label: 'Présentation',
       submenu: [
@@ -52,6 +65,14 @@ export function appMenuTemplate(actions: MenuActions): MenuItemConstructorOption
         { role: 'toggleDevTools' },
       ],
     },
-    { role: 'windowMenu' },
+    {
+      role: 'windowMenu',
+      label: 'Fenêtre',
+      submenu: [
+        { role: 'minimize', label: 'Placer dans le Dock' },
+        { role: 'zoom', label: 'Réduire/agrandir' },
+        { role: 'front', label: 'Tout ramener au premier plan' },
+      ],
+    },
   ];
 }

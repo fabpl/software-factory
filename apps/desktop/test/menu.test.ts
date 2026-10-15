@@ -73,6 +73,34 @@ describe('menu d’application (C4)', () => {
     ]);
   });
 
+  it('menus Édition et Fenêtre en français, rôles conservés', () => {
+    const top = appMenuTemplate(actions());
+    expect(top.map((i) => [i.label, i.role])).toEqual([
+      ['Software Factory', 'appMenu'],
+      ['Édition', 'editMenu'],
+      ['Présentation', undefined],
+      ['Fenêtre', 'windowMenu'],
+    ]);
+    const submenu = (role: string) =>
+      (top.find((i) => i.role === role)?.submenu as MenuItemConstructorOptions[]).map((i) => [
+        i.label,
+        i.role,
+      ]);
+    expect(submenu('editMenu')).toEqual([
+      ['Annuler', 'undo'],
+      ['Rétablir', 'redo'],
+      ['Couper', 'cut'],
+      ['Copier', 'copy'],
+      ['Coller', 'paste'],
+      ['Tout sélectionner', 'selectAll'],
+    ]);
+    expect(submenu('windowMenu')).toEqual([
+      ['Placer dans le Dock', 'minimize'],
+      ['Réduire/agrandir', 'zoom'],
+      ['Tout ramener au premier plan', 'front'],
+    ]);
+  });
+
   it('le nom affiché vient de productName, pas du name npm', () => {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
       name: string;
