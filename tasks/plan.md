@@ -84,7 +84,7 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 - [x] T23 Barre latérale : dépôt, nouvelle intention, tâches par phase, run en cours — issue #8, PR #9 fusionnée le 14 octobre 2026
 - [x] T24 Barre de menus, badge, notifications, fermeture et sortie propre — issue #10, PR #11 fusionnée le 14 octobre 2026, scénario manuel vérifié
 - [x] T25 E2E Playwright en mode `fake` — issue #13, PR #14 fusionnée le 15 octobre 2026 (dogfoodée via la CLI : 4 cartes de cadrage, 18 items, 10 preuves, job CI `e2e` sur macOS « 1 passed » ; une carte « Renvoyer en cadrage » résolue en amendant H4/C1 ; correctif du parseur de contrat poussé sur main en cours de boucle)
-- [ ] T26 Construction `.dmg`
+- [x] T26 Construction `.dmg` — issue #17, PR #18 fusionnée le 15 octobre 2026 (dogfoodée via la CLI : 3 cartes de cadrage B, A, A : `PATH` du shell de connexion résolu au démarrage si `app.isPackaged`, `FACTORY_INHERIT_PATH=1` pour les lancements hermétiques, job CI `packaged` sur `--dir` ; 16 items validés, implémentation 83 tours 2,08 $, 1 décision gardée : `launchctl setenv FACTORY_REPO` depuis le Finder ; `.dmg` arm64 de 227 Mo signé ad hoc ; suivis #19 choix du dépôt depuis l'app, #20 message « brew install gh »)
 
 ### Point de contrôle 4 — Jalon 1
 - [ ] A5 faite ; sorties de l'app comptées dans l'issue ; les cinq critères de succès de `SPEC-inbox` cochés ; README avec manifeste et compteur

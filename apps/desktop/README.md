@@ -65,10 +65,16 @@ Construction du 15 octobre 2026 (`pnpm --filter desktop build`, fin de sortie, s
   • building block map  blockMapFile=dist/Software Factory-0.0.0-arm64.dmg.blockmap
 ```
 
-`codesign -dv "dist/mac-arm64/Software Factory.app"` (à recopier : la commande n'a pas pu être lancée par l'agent) :
+`codesign -dv "dist/mac-arm64/Software Factory.app"` (15 octobre 2026, `.dmg` de 227 Mo) :
 
 ```text
-À compléter.
+Executable=…/dist/mac-arm64/Software Factory.app/Contents/MacOS/Software Factory
+Identifier=Electron
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=392 flags=0x20002(adhoc,linker-signed) hashes=9+0 location=embedded
+Signature=adhoc
+Info.plist=not bound
+TeamIdentifier=not set
 ```
 
 ### Scénario manuel : l'app installée depuis le `.dmg`
@@ -80,7 +86,13 @@ Construction du 15 octobre 2026 (`pnpm --filter desktop build`, fin de sortie, s
 5. Vérifier que les colonnes Arbitrer, Valider et Agir s'affichent, pas l'écran `blocked`, et que l'icône apparaît dans la barre de menus.
 6. Quitter par « Quitter », puis `launchctl unsetenv FACTORY_REPO`.
 
-Vérifié le :
+Vérifié le : 15 octobre 2026, sur `fabpl/software-factory` lui-même, sans run en cours.
+
+- Étapes 1 et 2 : `.dmg` monté par `hdiutil attach`, app copiée dans `/Applications` par `cp -R` (équivalent du glisser), image éjectée ; aucun attribut de quarantaine sur un `.dmg` construit localement, macOS n'a rien demandé.
+- Étapes 3 et 4 : `launchctl setenv FACTORY_REPO fabpl/software-factory`, puis `open "/Applications/Software Factory.app"` (LaunchServices, même environnement qu'un double-clic). Attention : `open -a "Software Factory"` lance la copie de `dist/mac-arm64/` si elle existe encore, les deux ayant le même identifiant ; passer le chemin complet.
+- Étape 5 : colonnes Arbitrer, Valider et Agir affichées, dépôt `fabpl/software-factory` et « Dernière synchronisation à l'instant » dans la barre latérale : `gh` trouvé par la résolution du `PATH`. Icône de la barre de menus non revérifiée ici (déjà vérifiée le 14 octobre 2026).
+- Étape 6 : « Quitter » par le menu, process déjà terminé à la première mesure, moins de 15 s après le clic (sans run), `launchctl unsetenv FACTORY_REPO`.
+- Détail relevé : le menu de l'app affiche « About desktop » et « Hide desktop », le nom du paquet npm ; les autres entrées sont en anglais aussi (`Hide Others`, `Show All`). À reprendre avec les libellés.
 
 ## E2E
 

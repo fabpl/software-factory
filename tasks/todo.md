@@ -164,7 +164,7 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Vérification : `pnpm --filter desktop test:e2e` en CI.
 - Dépendances : T22, T23, T20b. Taille : M. Fichiers : `e2e/full-loop.spec.ts`, `playwright.config.ts`.
 
-### T26 : Construction
+### T26 : Construction — fait (issue #17, PR #18, 15 octobre 2026)
 - Acceptation : `pnpm --filter desktop build` produit un `.dmg` non signé qui démarre.
 - Vérification : manuelle.
 - Dépendances : T24. Taille : S. Fichiers : `electron-builder.yml`.
