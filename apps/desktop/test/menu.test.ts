@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import type { MenuItemConstructorOptions } from 'electron';
 import { describe, expect, it, vi } from 'vitest';
 import { appMenuTemplate, trayMenuTemplate } from '../src/main/menu';
@@ -47,5 +48,103 @@ describe('menu d’application (C4)', () => {
 
   it('garde le menu Édition (copier, coller dans les champs)', () => {
     expect(appMenuTemplate(actions()).some((i) => i.role === 'editMenu')).toBe(true);
+  });
+
+  it('aucun libellé anglais, aucune entrée sans libellé', () => {
+    const english = [
+      'about',
+      'hide',
+      'others',
+      'show',
+      'all',
+      'window',
+      'edit',
+      'view',
+      'undo',
+      'redo',
+      'cut',
+      'copy',
+      'paste',
+      'select',
+      'toggle',
+      'developer',
+      'tools',
+      'minimize',
+      'zoom',
+      'front',
+      'desktop',
+    ];
+    const items = flatten(appMenuTemplate(actions())).filter((i) => i.type !== 'separator');
+    for (const item of items) {
+      expect(item.label, `rôle ${String(item.role)}`).toBeTruthy();
+      const label = item.label?.toLowerCase() ?? '';
+      expect(
+        english.filter((token) => label.includes(token)),
+        label,
+      ).toEqual([]);
+    }
+  });
+
+  it('sous-menu de l’app en français, rôles conservés', () => {
+    const app = appMenuTemplate(actions()).find((i) => i.role === 'appMenu');
+    const submenu = app?.submenu as MenuItemConstructorOptions[];
+    expect(submenu.map((i) => (i.type === 'separator' ? '—' : i.label))).toEqual([
+      'À propos de Software Factory',
+      '—',
+      'Masquer Software Factory',
+      'Masquer les autres',
+      'Tout afficher',
+      '—',
+      'Quitter',
+    ]);
+    expect(submenu.map((i) => i.role)).toEqual([
+      'about',
+      undefined,
+      'hide',
+      'hideOthers',
+      'unhide',
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it('menus Édition et Fenêtre en français, rôles conservés', () => {
+    const top = appMenuTemplate(actions());
+    expect(top.map((i) => [i.label, i.role])).toEqual([
+      ['Software Factory', 'appMenu'],
+      ['Édition', 'editMenu'],
+      ['Présentation', undefined],
+      ['Fenêtre', 'windowMenu'],
+    ]);
+    const submenu = (role: string) =>
+      (top.find((i) => i.role === role)?.submenu as MenuItemConstructorOptions[]).map((i) => [
+        i.label,
+        i.role,
+      ]);
+    expect(submenu('editMenu')).toEqual([
+      ['Annuler', 'undo'],
+      ['Rétablir', 'redo'],
+      ['Couper', 'cut'],
+      ['Copier', 'copy'],
+      ['Coller', 'paste'],
+      ['Tout sélectionner', 'selectAll'],
+    ]);
+    expect(submenu('windowMenu')).toEqual([
+      ['Placer dans le Dock', 'minimize'],
+      ['Réduire/agrandir', 'zoom'],
+      ['Tout ramener au premier plan', 'front'],
+    ]);
+  });
+
+  it('le nom affiché vient de productName, pas du name npm', () => {
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+      name: string;
+      productName: string;
+    };
+    expect(pkg.productName).toBe('Software Factory');
+    const labels = flatten(appMenuTemplate(actions())).map((i) => i.label);
+    expect(labels).toContain(`À propos de ${pkg.productName}`);
+    expect(labels).toContain(`Masquer ${pkg.productName}`);
+    expect(labels.some((l) => l?.includes(pkg.name))).toBe(false);
   });
 });
