@@ -1,4 +1,5 @@
 import type { MenuItemConstructorOptions } from 'electron';
+import { productName } from '../../package.json';
 
 /**
  * Gabarits des menus (C4), sans Electron : `app.ts` les passe à `Menu.buildFromTemplate`. Les
@@ -33,11 +34,11 @@ export function appMenuTemplate(actions: MenuActions): MenuItemConstructorOption
     {
       role: 'appMenu',
       submenu: [
-        { role: 'about' },
+        { role: 'about', label: `À propos de ${productName}` },
         { type: 'separator' },
-        { role: 'hide' },
-        { role: 'hideOthers' },
-        { role: 'unhide' },
+        { role: 'hide', label: `Masquer ${productName}` },
+        { role: 'hideOthers', label: 'Masquer les autres' },
+        { role: 'unhide', label: 'Tout afficher' },
         { type: 'separator' },
         { label: MENU_LABELS.quit, accelerator: 'CmdOrCtrl+Q', click: actions.quit },
       ],
