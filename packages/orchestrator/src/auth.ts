@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 import { err, ok, type Result } from '@factory/conventions';
 
@@ -44,7 +44,15 @@ function notReady(error: unknown, env: GhEnv): GhNotReady {
   const code = (error as { code?: string }).code;
   if (code === 'ENOENT') {
     const path = env.path === undefined || env.path === '' ? '(vide)' : env.path;
-    ghLocations(env.home).filter((file) => env.exists(file));
+    const found = ghLocations(env.home).find((file) => env.exists(file));
+    if (found !== undefined) {
+      const dir = dirname(found);
+      return {
+        kind: 'gh-not-ready',
+        command: `export PATH="${dir}:$PATH"`,
+        detail: `\`gh\` est installé dans ${dir} mais absent du PATH de l'app : ${path}`,
+      };
+    }
     return {
       kind: 'gh-not-ready',
       command: 'brew install gh && gh auth login',

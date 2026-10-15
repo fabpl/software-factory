@@ -32,8 +32,7 @@ describe('auth', () => {
   });
 
   it('gh absent → commande d’installation ; gh déconnecté → gh auth login', async () => {
-    const enoent = Object.assign(new Error('spawn gh ENOENT'), { code: 'ENOENT' });
-    expect(await ghToken(exec({ 'gh auth token': enoent }))).toMatchObject({
+    expect(await ghToken(exec({ 'gh auth token': enoent() }), env('/usr/bin:/bin'))).toMatchObject({
       ok: false,
       error: { kind: 'gh-not-ready', command: 'brew install gh && gh auth login' },
     });
@@ -124,5 +123,20 @@ describe('auth', () => {
     expect(new Set(regardes)).toEqual(
       new Set(['/opt/homebrew/bin/gh', '/usr/local/bin/gh', '/Users/moi/.local/bin/gh']),
     );
+  });
+
+  it('ENOENT avec gh hors du PATH → export PATH, pas brew install', async () => {
+    const ailleurs = env('/usr/bin:/bin', ['/opt/homebrew/bin/gh']);
+    for (const result of [
+      await ghToken(exec({ 'gh auth token': enoent() }), ailleurs),
+      await ghReady(exec({ 'gh auth status': enoent() }), ailleurs),
+    ]) {
+      expect(result.ok).toBe(false);
+      if (result.ok) continue;
+      expect(result.error.command).toBe('export PATH="/opt/homebrew/bin:$PATH"');
+      expect(result.error.command).not.toContain('brew install');
+      expect(result.error.detail).toContain('/opt/homebrew/bin');
+      expect(result.error.detail).toContain("absent du PATH de l'app");
+    }
   });
 });
