@@ -81,9 +81,9 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 ### Phase 4 — `inbox`
 - [x] T21 Squelette Electron : main, preload, renderer, pont IPC, écran `blocked` — issue #4, PR #5 fusionnée le 14 octobre 2026 (dogfoodée via la CLI : 2 cartes de cadrage, 19 items, 8 preuves, 2 décisions gardées ; `query()` tourne dans le process principal Electron sans correctif)
 - [x] T22 Colonnes et cartes avec zones de réponse, tests composants sur fixtures — issue #6, PR #7 fusionnée le 14 octobre 2026 (dogfoodée via la CLI : 3 cartes de cadrage, 18 items, 8 preuves `proven` par la CI, 1 décision gardée, 193 tours, 12,1 $ ; l’orchestrateur publie désormais les preuves `to-review` et `createdAt` dans `CardView` ; react-markdown ajouté à la spec). Défaut relevé : un second `pnpm factory` lancé pendant un run marque le run `failed` et publie une fausse carte « Run interrompu » (pas de garde contre deux orchestrateurs sur le même dépôt, issue de suivi à créer)
-- [ ] T23 Barre latérale : dépôt, nouvelle intention, tâches par phase, run en cours
-- [ ] T24 Barre de menus, badge, notifications, fermeture et sortie propre
-- [ ] T25 E2E Playwright en mode `fake`
+- [x] T23 Barre latérale : dépôt, nouvelle intention, tâches par phase, run en cours — issue #8, PR #9 fusionnée le 14 octobre 2026
+- [x] T24 Barre de menus, badge, notifications, fermeture et sortie propre — issue #10, PR #11 fusionnée le 14 octobre 2026, scénario manuel vérifié
+- [x] T25 E2E Playwright en mode `fake` — issue #13, PR #14 fusionnée le 15 octobre 2026 (dogfoodée via la CLI : 4 cartes de cadrage, 18 items, 10 preuves, job CI `e2e` sur macOS « 1 passed » ; une carte « Renvoyer en cadrage » résolue en amendant H4/C1 ; correctif du parseur de contrat poussé sur main en cours de boucle)
 - [ ] T26 Construction `.dmg`
 
 ### Point de contrôle 4 — Jalon 1

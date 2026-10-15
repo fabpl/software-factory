@@ -159,7 +159,7 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Vérification : manuelle, scénario noté dans `apps/desktop/README.md`.
 - Dépendances : T21. Taille : S. Fichiers : `src/main/tray.ts`, `src/main/notifications.ts`, `src/main/index.ts`.
 
-### T25 : E2E
+### T25 : E2E — fait (issue #13, PR #14, 15 octobre 2026)
 - Acceptation : Playwright Electron lance l'app avec l'orchestrateur en mode `fake` (`full-loop.json`), répond à une question, valide un item, tranche un arbitrage, marque une preuve, voit « Fusionner la PR ».
 - Vérification : `pnpm --filter desktop test:e2e` en CI.
 - Dépendances : T22, T23, T20b. Taille : M. Fichiers : `e2e/full-loop.spec.ts`, `playwright.config.ts`.
