@@ -15,6 +15,7 @@ export default defineConfig({
           index: 'src/main/index.ts',
           probe: 'src/main/probe.ts',
           screenshot: 'src/main/screenshot.ts',
+          e2e: 'src/main/e2e.ts',
         },
       },
     },

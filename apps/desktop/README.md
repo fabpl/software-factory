@@ -23,6 +23,32 @@ Une fois lancée :
 - une notification signale chaque nouvelle carte Arbitrer ou Agir, chaque fin de run (terminé ou échoué) et chaque passage en `verdict` ; un clic ouvre la fenêtre sur la carte concernée ;
 - « Quitter » est la seule sortie : il annule le run en cours (au plus 10 s), puis ferme l'app.
 
+## E2E
+
+```sh
+pnpm --filter desktop test:e2e
+```
+
+La commande construit l'app (`electron-vite build`) puis lance `playwright test` sur `e2e/`. Playwright démarre l'app construite sur l'entrée `out/main/e2e.js` : c'est la même app (renderer, preload, IPC), mais l'orchestrateur vient de `bootstrapFake` (`@factory/orchestrator/fake`) au lieu de `bootstrap()`. `pnpm test` ne lance pas Playwright. En CI, le job `e2e` tourne sur `macos-latest`, sans `GH_TOKEN`.
+
+Le test `e2e/full-loop.spec.ts` va de l'intention jusqu'à la carte « Fusionner la PR » dans Agir. Il ne passe que par rôles et libellés français, sans pause fixe ni clic sur « Rafraîchir ». À l'échec, la trace et la capture restent dans `test-results/`, que git ignore.
+
+Ce que fait le mode `fake` :
+
+- GitHub en mémoire, amorcé avec une issue #1 en `phase:intent` ;
+- agent simulé qui rejoue le scénario `full-loop.json` (cadrage puis implémentation) ;
+- CI verte dès qu'on la lit pour la tête de toute PR ouverte ;
+- dépôt `origin` nu, worktrees et journaux dans des dossiers temporaires sous `os.tmpdir()`, jamais dans `~/.software-factory` ;
+- tick toutes les 500 ms.
+
+Ce qu'il ne fait pas :
+
+- pas de vrai SDK Claude, de vrai dépôt, de `gh` ni de réseau ;
+- `FACTORY_REPO` n'est pas lu ;
+- pas d'état « CI en cours » ;
+- pas de fusion : le test s'arrête à la carte « Fusionner la PR » ;
+- pas d'E2E sous Linux.
+
 ## Scénario manuel : fermer n'interrompt pas, quitter interrompt proprement
 
 Critère de succès 3 de SPEC-inbox. À rejouer sur un dépôt de test, avec une issue prête à lancer (contrat validé).

@@ -76,8 +76,8 @@ describe('bootstrapFake (mode fake de l’app)', () => {
     spy.mockRestore();
   });
 
-  // Une carte ouverte bloque le passage en `evidence` (reconcile) : « Nom du module » doit être
-  // gardée pour atteindre « Fusionner la PR ». H4 dit l'inverse : renvoyé en cadrage.
+  // Même ordre que `apps/desktop/e2e/full-loop.spec.ts` (C1, H4 amendés par la carte card-5) : une
+  // carte ouverte bloque le passage en `evidence`, « Nom du module » est donc gardée.
   it('la boucle du test E2E mène à « Fusionner la PR » une fois la décision « Nom du module » gardée', async () => {
     const { orchestrator: o, github } = await createFake();
     const answer = async (title: string, letter: string): Promise<void> => {
@@ -99,7 +99,6 @@ describe('bootstrapFake (mode fake de l’app)', () => {
     await o.startImplementation(1);
     await o.waitForRun();
     await answer('Nouvelle dépendance de production', 'B');
-    for (let i = 0; i < 3; i++) await o.tick();
     const decision = o.getState().validate.find((c) => c.title === 'Nom du module');
     await o.answerCard(decision?.id ?? '', {
       cardId: decision?.id ?? '',
@@ -107,10 +106,9 @@ describe('bootstrapFake (mode fake de l’app)', () => {
       text: '',
     });
     await o.waitForRun();
-    for (let i = 0; i < 3; i++) await o.tick();
     const pr = github.pulls[0]?.number ?? 0;
     await o.markEvidenceReviewed(pr, 'C2', 'proven', '');
-    await o.tick();
+    for (let i = 0; i < 4; i++) await o.tick();
     expect(o.getState().act.map((c) => c.title)).toEqual([CARD_TITLES.merge]);
     expect(github.pulls[0]?.merged).toBe(false);
   });
