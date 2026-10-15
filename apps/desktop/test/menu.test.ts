@@ -50,6 +50,41 @@ describe('menu d’application (C4)', () => {
     expect(appMenuTemplate(actions()).some((i) => i.role === 'editMenu')).toBe(true);
   });
 
+  it('aucun libellé anglais, aucune entrée sans libellé', () => {
+    const english = [
+      'about',
+      'hide',
+      'others',
+      'show',
+      'all',
+      'window',
+      'edit',
+      'view',
+      'undo',
+      'redo',
+      'cut',
+      'copy',
+      'paste',
+      'select',
+      'toggle',
+      'developer',
+      'tools',
+      'minimize',
+      'zoom',
+      'front',
+      'desktop',
+    ];
+    const items = flatten(appMenuTemplate(actions())).filter((i) => i.type !== 'separator');
+    for (const item of items) {
+      expect(item.label, `rôle ${String(item.role)}`).toBeTruthy();
+      const label = item.label?.toLowerCase() ?? '';
+      expect(
+        english.filter((token) => label.includes(token)),
+        label,
+      ).toEqual([]);
+    }
+  });
+
   it('sous-menu de l’app en français, rôles conservés', () => {
     const app = appMenuTemplate(actions()).find((i) => i.role === 'appMenu');
     const submenu = app?.submenu as MenuItemConstructorOptions[];

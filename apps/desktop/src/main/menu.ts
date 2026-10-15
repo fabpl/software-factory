@@ -62,7 +62,7 @@ export function appMenuTemplate(actions: MenuActions): MenuItemConstructorOption
       submenu: [
         { label: MENU_LABELS.refresh, accelerator: 'CmdOrCtrl+R', click: actions.refresh },
         { type: 'separator' },
-        { role: 'toggleDevTools' },
+        { role: 'toggleDevTools', label: 'Outils de développement' },
       ],
     },
     {
