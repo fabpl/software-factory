@@ -13,7 +13,8 @@ pnpm --filter desktop dev
 
 - `FACTORY_REPO=owner/repo` choisit le dépôt piloté ; sans lui, `gh repo view` détecte celui du dossier courant.
 - `FACTORY_HOME` remplace le dossier maison `~/.software-factory` (clones, worktrees, journaux), partagé avec `pnpm factory`.
-- `pnpm --filter desktop build` produit `out/` ; `pnpm --filter desktop screenshot:blocked` capture l'écran `blocked`.
+- `FACTORY_INHERIT_PATH=1` garde le `PATH` hérité dans l'app empaquetée (voir « Construire »).
+- `pnpm --filter desktop build` produit le `.dmg` (voir « Construire ») ; `pnpm --filter desktop screenshot:blocked` capture l'écran `blocked`.
 
 Une fois lancée :
 
@@ -22,6 +23,64 @@ Une fois lancée :
 - fermer la fenêtre la masque, sans arrêter l'orchestrateur ni le run en cours ;
 - une notification signale chaque nouvelle carte Arbitrer ou Agir, chaque fin de run (terminé ou échoué) et chaque passage en `verdict` ; un clic ouvre la fenêtre sur la carte concernée ;
 - « Quitter » est la seule sortie : il annule le run en cours (au plus 10 s), puis ferme l'app.
+
+## Construire
+
+```sh
+pnpm --filter desktop build          # electron-vite build, puis electron-builder --mac dmg
+pnpm --filter desktop build:dir      # même paquet, sans .dmg : dist/mac-arm64/Software Factory.app
+pnpm --filter desktop test:packaged  # Playwright sur l'app de dist/mac-arm64 (à lancer après build:dir)
+```
+
+`build` produit `dist/Software Factory-<version>-arm64.dmg` : arm64 seulement, non signé, non notarisé, icône Electron par défaut. Configuration : `electron-builder.yml`.
+
+L'app installée exécute le même `out/main/index.js`, le même preload et le même renderer que `pnpm --filter desktop dev`, et partage `FACTORY_HOME`, `FACTORY_REPO` et `~/.software-factory` avec `pnpm factory`.
+
+Contenu embarqué :
+
+- `out/` et `package.json` dans `app.asar` ; `@factory/*` y est déjà bundlé par electron-vite, donc exclu de `node_modules` ;
+- les dépendances de production de `package.json` dans `node_modules` ;
+- `@anthropic-ai/claude-agent-sdk*` hors de l'asar (`app.asar.unpacked/`) : le SDK lance son binaire `claude` en sous-processus, qui doit rester un fichier exécutable ;
+- `skills/` (racine du dépôt) dans `Contents/Resources/skills`, où `defaultSkillsDir()` le trouve en remontant depuis `app.asar/out/main/`.
+
+`electron-builder` construit sans script d'installation : `onlyBuiltDependencies` de `pnpm-workspace.yaml` ne liste toujours qu'`electron`.
+
+**Ouvrir l'app non signée.** Au premier lancement, macOS refuse une app téléchargée sans signature Developer ID. Clic droit sur l'app dans Applications, « Ouvrir », puis confirmer ; ou `xattr -dr com.apple.quarantine "/Applications/Software Factory.app"`.
+
+**`PATH` depuis le Finder.** Lancée depuis le Finder, une app n'hérite que du `PATH` minimal de launchd (`/usr/bin:/bin:/usr/sbin:/sbin`) et ne trouverait ni `gh` ni les outils de l'agent (`node`, `pnpm`). Au démarrage, l'app empaquetée lit donc une fois le `PATH` de `$SHELL -ilc` (5 s au plus, sortie lue entre deux marqueurs pour ignorer les bannières de `.zshrc`) et l'applique avant `bootstrap()`. En cas d'échec, de délai dépassé ou de sortie illisible, elle garde le `PATH` hérité. `FACTORY_INHERIT_PATH=1` désactive cette résolution : aucun shell n'est lancé. Le test empaqueté la pose, avec `PATH=/usr/bin:/bin`, pour obtenir l'écran `blocked` sans dépendre de la machine. `pnpm --filter desktop dev` ne lance jamais ce shell.
+
+**Dépôt piloté depuis le Finder.** Le dossier courant d'une app lancée depuis le Finder est `/` : sans `FACTORY_REPO`, `gh repo view` ne trouve aucun dépôt et l'app affiche l'écran `blocked`. Avant de lancer l'app :
+
+```sh
+launchctl setenv FACTORY_REPO owner/repo   # vaut jusqu'à la fin de session ou launchctl unsetenv
+```
+
+En CI, le job `packaged` (`macos-latest`) lance `build:dir` puis `test:packaged` ; il ne construit ni ne publie de `.dmg`. `e2e/packaged.spec.ts` démarre l'exécutable de l'app avec `PATH=/usr/bin:/bin`, `FACTORY_INHERIT_PATH=1` et un `FACTORY_HOME` temporaire ; il vérifie l'écran `blocked`, l'absence d'erreur de chargement, l'emplacement de `skills/` et le bit d'exécution du binaire `claude`. `test:e2e` ne l'exécute pas.
+
+Construction du 15 octobre 2026 (`pnpm --filter desktop build`, fin de sortie, sans erreur) :
+
+```text
+  • skipped macOS code signing  reason=identity explicitly is set to null
+  • building        target=DMG arch=arm64 file=dist/Software Factory-0.0.0-arm64.dmg
+  • building block map  blockMapFile=dist/Software Factory-0.0.0-arm64.dmg.blockmap
+```
+
+`codesign -dv "dist/mac-arm64/Software Factory.app"` (à recopier : la commande n'a pas pu être lancée par l'agent) :
+
+```text
+À compléter.
+```
+
+### Scénario manuel : l'app installée depuis le `.dmg`
+
+1. `pnpm --filter desktop build`, puis ouvrir `apps/desktop/dist/Software Factory-<version>-arm64.dmg`.
+2. Glisser « Software Factory » dans Applications, puis éjecter le `.dmg`.
+3. `launchctl setenv FACTORY_REPO owner/repo` sur un dépôt de test, `gh` connecté dans le terminal.
+4. Lancer l'app depuis le Finder (Applications, double-clic ; « Ouvrir » si macOS le demande).
+5. Vérifier que les colonnes Arbitrer, Valider et Agir s'affichent, pas l'écran `blocked`, et que l'icône apparaît dans la barre de menus.
+6. Quitter par « Quitter », puis `launchctl unsetenv FACTORY_REPO`.
+
+Vérifié le :
 
 ## E2E
 

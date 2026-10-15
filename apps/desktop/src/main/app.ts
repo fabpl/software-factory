@@ -9,6 +9,7 @@ import { createLifecycle, type Lifecycle } from './lifecycle';
 import { appMenuTemplate, trayMenuTemplate, type MenuActions } from './menu';
 import { startNotifier, type Notice } from './notifications';
 import { createRuntime, type Bootstrap, type Runtime } from './runtime';
+import { loginShellPath, runShell } from './shell';
 import { startBadge, trayIcon } from './tray';
 import { windowOptions } from './window';
 
@@ -40,6 +41,13 @@ function logError(error: unknown): void {
 }
 
 async function start(hooks: AppOptions): Promise<void> {
+  // D1 : `gh`, `node` et `pnpm` trouvés depuis le Finder ; avant `bootstrap()`, qui lance `gh`.
+  const path = await loginShellPath({
+    isPackaged: app.isPackaged,
+    env: process.env,
+    run: runShell,
+  });
+  if (path !== undefined) process.env.PATH = path;
   const repo = hooks.bootstrap === undefined ? process.env.FACTORY_REPO : undefined;
   const runtime = await createRuntime({
     bootstrap: hooks.bootstrap ?? bootstrap,

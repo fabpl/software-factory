@@ -17,6 +17,7 @@ export default defineConfig({
         'src/main/notifications.ts',
         'src/main/paths.ts',
         'src/main/runtime.ts',
+        'src/main/shell.ts',
         'src/main/tray.ts',
         'src/main/window.ts',
         'src/preload/api.ts',
