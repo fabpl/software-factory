@@ -39,8 +39,9 @@ src/log.ts           JSONL par issue, purge à 30 jours
 src/auth.ts          gh auth token / status / setup-git
 src/bootstrap.ts     assemblage réel (gh, Octokit, Claude Code, worktrees, journaux)
 src/cli.ts           pnpm factory
-test/fakes/          GitHub en mémoire, adaptateur fake routé par skill, dépôt git temporaire
-test/fixtures/full-loop.json   scénario : 3 cartes de cadrage, décision + arbitrage, ADR, CI, verdict
+src/fake/            GitHub en mémoire, adaptateur fake routé par skill, dépôt git temporaire,
+                     bootstrapFake (mode fake de l'app) ; exporté par @factory/orchestrator/fake
+src/fake/full-loop.json   scénario : 3 cartes de cadrage, décision + arbitrage, ADR, CI, verdict
 ```
 
 ## Interprétations (là où la spec laissait un choix)

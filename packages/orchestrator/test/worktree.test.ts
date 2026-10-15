@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createWorktrees, type WorktreePort } from '../src/worktree.js';
-import { IDENTITY, tempRepo, type TempRepo } from './fakes/repo.js';
+import { IDENTITY, tempRepo, type TempRepo } from '../src/fake/repo.js';
 
 describe('worktree', () => {
   let repo: TempRepo;

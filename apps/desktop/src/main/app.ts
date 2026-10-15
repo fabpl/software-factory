@@ -8,7 +8,7 @@ import { registerIpc } from './ipc';
 import { createLifecycle, type Lifecycle } from './lifecycle';
 import { appMenuTemplate, trayMenuTemplate, type MenuActions } from './menu';
 import { startNotifier, type Notice } from './notifications';
-import { createRuntime, type Runtime } from './runtime';
+import { createRuntime, type Bootstrap, type Runtime } from './runtime';
 import { startBadge, trayIcon } from './tray';
 import { windowOptions } from './window';
 
@@ -16,12 +16,16 @@ import { windowOptions } from './window';
  * Process principal : colle Electron seule (H1). `bootstrap()` tel quel, une fenêtre isolée,
  * l'orchestrateur branché sur IPC ; barre de menus, badge, notifications et « fermer = masquer »
  * (T24) délèguent à `tray.ts`, `notifications.ts`, `menu.ts` et `lifecycle.ts`. `index.ts`
- * l'appelle sans crochet ; `screenshot.ts` avec.
+ * l'appelle sans crochet ; `screenshot.ts` avec ; `e2e.ts` avec `bootstrapFake` (D2).
  */
 
 export interface AppOptions {
   /** Racine du paquet (`packageRoot(import.meta.url)` depuis l'entrée). */
   root: string;
+  /** Remplace le vrai `bootstrap()` ; `FACTORY_REPO` n'est alors pas lu. */
+  bootstrap?: Bootstrap;
+  /** Remplace le dossier maison résolu par `resolveHome`. */
+  home?: string;
   /** Appelé une fois le renderer chargé (capture d'écran, diagnostic). */
   onLoaded?: (window: BrowserWindow, runtime: Runtime) => Promise<void>;
 }
@@ -36,10 +40,10 @@ function logError(error: unknown): void {
 }
 
 async function start(hooks: AppOptions): Promise<void> {
-  const repo = process.env.FACTORY_REPO;
+  const repo = hooks.bootstrap === undefined ? process.env.FACTORY_REPO : undefined;
   const runtime = await createRuntime({
-    bootstrap,
-    home: resolveHome(process.env, homedir()),
+    bootstrap: hooks.bootstrap ?? bootstrap,
+    home: hooks.home ?? resolveHome(process.env, homedir()),
     ...(repo !== undefined ? { repo } : {}),
   });
   const out = join(hooks.root, 'out');

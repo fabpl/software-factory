@@ -20,3 +20,27 @@ jobs:
       - run: pnpm format
       - run: pnpm typecheck
       - run: pnpm test
+
+  # E2E Playwright de l'inbox en mode fake (D4) : macOS seulement, sans GH_TOKEN.
+  e2e:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter desktop test:e2e
+      - name: Aucun faux dans l'entrée réelle (C10)
+        # `! grep` seul ne fait pas échouer une étape sous `bash -e` : test explicite.
+        run: |
+          if grep -qE 'FakeGitHub|bootstrapFake' apps/desktop/out/main/index.js; then exit 1; fi
+          grep -q FakeGitHub apps/desktop/out/main/e2e.js
+          grep -q bootstrapFake apps/desktop/out/main/e2e.js
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-test-results
+          path: apps/desktop/test-results/

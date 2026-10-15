@@ -1,7 +1,7 @@
 import { parseCounter } from '@factory/conventions';
 import { describe, expect, it } from 'vitest';
 import { counterCommand } from '../src/counter.js';
-import { FakeGitHub } from './fakes/github.js';
+import { FakeGitHub } from '../src/fake/github.js';
 
 const README =
   '# Widget\n\n## Compteur\n\n<!-- factory:counter -->\n**0**\n<!-- /factory:counter -->\n\nfin\n';

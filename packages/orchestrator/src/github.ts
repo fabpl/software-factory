@@ -2,7 +2,7 @@ import { parseMarker, type LabelDefinition } from '@factory/conventions';
 
 /**
  * Port GitHub : tout ce que l'orchestrateur lit et écrit. Deux implémentations : `octokit.ts`
- * (API réelle, ETag) et `test/fakes/github.ts` (mémoire). Rien ici ne connaît Octokit.
+ * (API réelle, ETag) et `src/fake/github.ts` (mémoire). Rien ici ne connaît Octokit.
  */
 
 export interface RepoRef {
