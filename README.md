@@ -1,6 +1,6 @@
 # Software Factory
 
-> **En construction.** Software factory orientée décision : l'humain spécifie une intention, valide les décisions importantes, valide des preuves. Il n'écrit ni ne lit de code.
+> **Jalon 1 atteint le 15 octobre 2026** (issue #20 traitée de l'intention au verdict depuis l'app, une seule sortie : la fusion). Software factory orientée décision : l'humain spécifie une intention, valide les décisions importantes, valide des preuves. Il n'écrit ni ne lit de code.
 
 ## Thèse
 

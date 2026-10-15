@@ -87,7 +87,7 @@ skills et agent-adapter sont parallélisables après le point de contrôle 1.
 - [x] T26 Construction `.dmg` — issue #17, PR #18 fusionnée le 15 octobre 2026 (dogfoodée via la CLI : 3 cartes de cadrage B, A, A : `PATH` du shell de connexion résolu au démarrage si `app.isPackaged`, `FACTORY_INHERIT_PATH=1` pour les lancements hermétiques, job CI `packaged` sur `--dir` ; 16 items validés, implémentation 83 tours 2,08 $, 1 décision gardée : `launchctl setenv FACTORY_REPO` depuis le Finder ; `.dmg` arm64 de 227 Mo signé ad hoc ; suivis #19 choix du dépôt depuis l'app, #20 message « brew install gh »)
 
 ### Point de contrôle 4 — Jalon 1
-- [ ] A5 faite ; sorties de l'app comptées dans l'issue ; les cinq critères de succès de `SPEC-inbox` cochés ; README avec manifeste et compteur
+- [x] A5 faite (issue #20, PR #24, 15 octobre 2026, 1 sortie : la fusion) ; sorties de l'app comptées dans l'issue ; les cinq critères de succès de `SPEC-inbox` cochés (détail dans `todo.md`) ; README avec thèse et compteur. Jalon 1 atteint.
 
 ## Risques
 

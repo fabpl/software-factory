@@ -170,5 +170,5 @@ Format : description, acceptation, vérification, dépendances, fichiers, taille
 - Dépendances : T24. Taille : S. Fichiers : `electron-builder.yml`.
 
 ### Point de contrôle 4 — Jalon 1
-- [ ] A5 : une issue réelle de l'intention au verdict depuis l'app, sorties comptées dans l'issue.
-- [ ] Les 5 critères de `SPEC-inbox` cochés ; README avec manifeste et compteur « fois où il a fallu ouvrir le code ».
+- [x] A5 : issue #20 « Message brew install gh trompeur » traversée de l'intention au verdict depuis l'app (`pnpm --filter desktop dev`) le 15 octobre 2026 : 2 cartes de cadrage (A, A), 11 items validés, implémentation 32 tours 0,66 $, 4 preuves CI `proven`, carte Agir « Fusionner la PR » puis « C'est fait » ; PR #24 fusionnée. Sorties comptées dans l'issue : 1 (la fusion, cause Agir) ; zéro ouverture du code. Premier passage sur #21 « Menu de l'app en anglais » (PR #22) le même jour, fusionnée 30 s avant la carte Agir : décompte posté aussi, suivi #23 (issue fermée qui garde `phase:evidence` / `needs:action`).
+- [x] Les 5 critères de `SPEC-inbox` cochés : 1 E2E `fake` en CI (job `e2e`, T25) ; 2 issue #20 ci-dessus ; 3 scénario fermer / quitter rejoué le 14 octobre 2026 (issue #12, `apps/desktop/README.md`) ; 4 test `labels.test.tsx` sur les fixtures + test `menu.test.ts` « aucun libellé anglais » (PR #22) ; 5 `.dmg` construit et lancé depuis Applications le 15 octobre 2026 (T26). README : thèse et compteur `factory:counter` en place.
